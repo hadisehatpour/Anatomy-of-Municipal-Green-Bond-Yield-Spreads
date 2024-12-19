@@ -1,0 +1,223 @@
+---
+title: "Anova Test"
+author: "Hadi"
+date: "2024-04-03"
+output: html_document
+---
+
+load libraries
+```{r}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(purrr)
+library(tidyverse)
+library(stringr)
+library(reshape2)
+library(viridis)
+library(fds)
+library(tidyr)
+library(viridis)
+library(transport)
+library(viridis)
+library(gridExtra)
+library(kableExtra)
+library(lmtest)
+library(tseries)
+library(feather)
+```
+
+
+
+```{r}
+
+attributes <- c("MUNI_TAX_PROV","Pricing_TYP", "CPN_range",
+                "S_OID","Y_OID", "DAM", "CALLABLE", "Issued_Amt")
+
+ds <- list()
+
+ds_maturity <- California_20_23 %>%
+    group_by(Date, Maturity_OID) %>%
+    summarise(S1_med = median(S1),
+              S2_med = median(S2)) %>%
+    ungroup()
+
+for (i in 1:length(attributes)) {
+ 
+  ds[[i]] <- California_20_23 %>%
+    group_by(Date, Maturity_OID, !!sym(attributes[i])) %>%
+    summarise(S1_med = median(S1),
+              S2_med = median(S2)) %>%
+    ungroup()
+}
+
+# Combine all data frames into one
+ds <- bind_rows(ds)
+
+
+```
+
+
+
+attribute Anova tests for maturity groups
+```{r}
+ 
+maturities <- c(" Less than 8", "8_12.3", "12.3_17", "Higher than 17")
+attributes <- c("MUNI_TAX_PROV","Pricing_TYP", "CPN_range",
+                "S_OID","Y_OID", "DAM", "CALLABLE", "Issued_Amt")
+
+aov_t_data <- list()
+anov_test_1 <- list()
+anov_test_2 <- list()
+
+#Group data according to maturity and attributes
+for (i in 1:length(maturities)) {
+  aov_t_data[[i]] <- vector("list", length(attributes))  # Initialize sublist for the current maturity
+  anov_test_1[[i]] <- vector("list", length(attributes))  # Initialize sublist for ANOVA results (S_1)
+  anov_test_2[[i]] <- vector("list", length(attributes))  # Initialize sublist for ANOVA results (S_2)
+  for (j in 1:length(attributes)) {
+    aov_t_data[[i]][[j]] <- California_20_23 %>%
+      group_by(Date, Maturity_OID, !!sym(attributes[j])) %>%
+      filter(Maturity_OID == maturities[i]) %>%
+      summarise(S1_med = median(S1),
+                S2_med = median(S2)) %>%
+      ungroup()
+    
+    #Anova test for S_1
+    aov_t_data[[i]][[j]][[attributes[j]]] <- as.factor(aov_t_data[[i]][[j]][[attributes[j]]])
+    formula_str_1 <- paste("S1_med ~", attributes[j])
+    formula_1 <- as.formula(formula_str_1)
+    anov_test_1[[i]][[j]] <- anova(aov(formula_1, data = aov_t_data[[i]][[j]]))
+    
+    #Anova test for S_2
+    formula_str_2 <- paste("S2_med ~", attributes[j])
+    formula_2 <- as.formula(formula_str_2)
+    anov_test_2[[i]][[j]] <- anova(aov(formula_2, data = aov_t_data[[i]][[j]]))
+      
+  }
+}
+
+
+
+```
+
+
+
+
+
+Box plots - All maturity groups for S1
+
+```{r}
+
+# Convert aov_t_data (list) to dataframe
+aov_t_data_df <- bind_rows(aov_t_data)
+
+# Define output directory
+output_dir <- "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Results plots/Anova/S1"
+
+
+
+maturities <- c(" Less than 8", "8_12.3", "12.3_17", "Higher than 17")
+attributes <- c("MUNI_TAX_PROV","Pricing_TYP", "CPN_range",
+                "S_OID","Y_OID", "DAM", "CALLABLE", "Issued_Amt")
+
+for (j in 1:length(maturities)) {
+  for (i in 1:length(attributes)) {
+    plot_data <- aov_t_data_df %>%
+      dplyr::select(Date, Maturity_OID, S1_med, S2_med, !!sym(attributes[i])) %>%
+      filter(Maturity_OID == maturities[j],
+             if (attributes[i] == "MUNI_TAX_PROV") {
+               !is.na(!!sym(attributes[i])) &
+               (!!sym(attributes[i]) %in% c("FED TAXABLE/ST TAX-EXEMPT", "FED & ST TAX-EXEMPT"))
+             } else {
+               !is.na(!!sym(attributes[i]))
+             })
+    
+    if (nrow(plot_data) > 0) {
+      p <- ggplot(plot_data, aes(x = !!sym(attributes[i]), y = S1_med, fill = !!sym(attributes[i]))) +
+        geom_boxplot(alpha = 0.5, color = "black") +
+        geom_point(shape = 21, size = 2, 
+                   position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.75)) +
+        geom_hline(yintercept = median(California_20_23$S1[California_20_23$Maturity_OID == maturities[j]]), 
+                   linetype = "dashed", color = "red", size = 1) + 
+        geom_hline(yintercept = 0, linetype = "solid", color = "black", size = 0.1) +
+        ylim(-2, 2) +
+        theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+              axis.text.x = element_text(angle = 0, hjust = 1),
+              legend.position = "bottom",  # Position legend at bottom
+              strip.background = element_blank()) +  # Hide maturity labels
+        facet_wrap(~ Maturity_OID, nrow = length(maturities), labeller = labeller(Maturity_OID = NULL)) +
+        guides(fill = guide_legend(title = NULL))  # Remove legend title
+      
+      # Save plot to directory
+      plot_filename <- paste(output_dir, sprintf("plot_%s_%s_S1.png", attributes[i], maturities[j]), sep = "/")
+      ggsave(plot_filename, plot = p, width = 8, height = 6, units = "in", dpi = 300)
+    }
+  }
+}
+
+
+```
+
+
+
+Box plots - All maturity groups for S2
+
+```{r}
+
+
+# Convert aov_t_data (list) to dataframe
+aov_t_data_df <- bind_rows(aov_t_data)
+
+# Define output directory
+output_dir <- "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Results plots/Anova/S2"
+
+
+
+maturities <- c(" Less than 8", "8_12.3", "12.3_17", "Higher than 17")
+attributes <- c("MUNI_TAX_PROV","Pricing_TYP", "CPN_range",
+                "S_OID","Y_OID", "DAM", "CALLABLE", "Issued_Amt")
+
+for (j in 1:length(maturities)) {
+  for (i in 1:length(attributes)) {
+    plot_data <- aov_t_data_df %>%
+      dplyr::select(Date, Maturity_OID, S1_med, S2_med, !!sym(attributes[i])) %>%
+      filter(Maturity_OID == maturities[j],
+             if (attributes[i] == "MUNI_TAX_PROV") {
+               !is.na(!!sym(attributes[i])) &
+               (!!sym(attributes[i]) %in% c("FED TAXABLE/ST TAX-EXEMPT", "FED & ST TAX-EXEMPT"))
+             } else {
+               !is.na(!!sym(attributes[i]))
+             })
+    
+    if (nrow(plot_data) > 0) {
+      p <- ggplot(plot_data, aes(x = !!sym(attributes[i]), y = S2_med, fill = !!sym(attributes[i]))) +
+        geom_boxplot(alpha = 0.5, color = "black") +
+        geom_point(shape = 21, size = 2, 
+                   position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.75)) +
+        geom_hline(yintercept = median(California_20_23$S2[California_20_23$Maturity_OID == maturities[j]]), 
+                   linetype = "dashed", color = "red", size = 1) + 
+        geom_hline(yintercept = 0, linetype = "solid", color = "black", size = 0.1) +
+        ylim(-2, 2) +
+        theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+              axis.text.x = element_text(angle = 0, hjust = 1),
+              legend.position = "bottom",  # Position legend at bottom
+              strip.background = element_blank()) +  # Hide maturity labels
+        facet_wrap(~ Maturity_OID, nrow = length(maturities), labeller = labeller(Maturity_OID = NULL)) +
+        guides(fill = guide_legend(title = NULL))  # Remove legend title
+      
+      # Save plot to directory
+      plot_filename <- paste(output_dir, sprintf("plot_%s_%s_S2.png", attributes[i], maturities[j]), sep = "/")
+      ggsave(plot_filename, plot = p, width = 8, height = 6, units = "in", dpi = 300)
+    }
+  }
+}
+
+
+
+```
+
+
+
+
+
