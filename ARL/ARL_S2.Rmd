@@ -1,0 +1,1305 @@
+---
+title: "ARL_S2"
+author: "Hadi"
+date: "2023-12-05"
+output: html_document
+---
+
+```{r}
+library(arules)
+library(arulesViz)
+library(knitr)
+library(plyr)
+library(dplyr)
+library(RColorBrewer)
+library(stringr)
+library(writexl)
+library(feather)
+library(xtable)
+```
+
+Load datasets
+```{r}
+MLFeat <- 
+  read_excel(path ="C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine learning ARL/Data/Features.xlsx", na = c ("NA", "#N/A N/A", "#N/A Field Not Applicable", "#N/A Invalid Security"))
+
+
+
+California_20_23 <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/California_20_23.feather")
+
+
+```
+
+
+Add median (and mean) of S1 to by year and bond
+```{r}
+#Adding median of S1 to by year and bonds
+ARL_S2 <- California_20_23 %>% group_by(ID_CUSIP, year) %>% dplyr::summarise(Med_S2 = median(S2)
+                                                                    , Mea_S2 = mean(S2))
+
+```
+
+Label Spread based on their sign
+```{r}
+
+#Labeling Spread based on their sign
+
+ARL_S2$Med_SL <- 0
+ARL_S2$Mea_SL <- 0
+
+
+#Median
+
+for (i in 1:nrow(ARL_S2)){
+  if (ARL_S2$Med_S2[i] > 0){
+    ARL_S2$Med_SL[i] <- "S+"
+  } else if (ARL_S2$Med_S2[i] < 0){
+    ARL_S2$Med_SL[i] <- "S-"
+  } else if (ARL_S2$Med_S2[i] == 0){
+    ARL_S2$Med_SL[i] <- "S0"
+  }
+} 
+
+
+#Mean
+
+for (i in 1:nrow(ARL_S2)){
+  if (ARL_S2$Mea_S2[i] > 0){
+    ARL_S2$Mea_SL[i] <- "S+"
+  } else if (ARL_S2$Mea_S2[i] < 0){
+    ARL_S2$Mea_SL[i] <- "S-"
+  } else if (ARL_S2$Mea_S2[i] == 0){
+    ARL_S2$Mea_SL[i] <- "S0"
+  }
+} 
+
+```
+
+Adding features
+```{r}
+ARL_S2 <- merge(ARL_S2, MLFeat, by = "ID_CUSIP")
+
+```
+
+
+labeling numerical features
+```{r}
+
+#replace labels  for Callability
+
+for (i in 1:nrow(ARL_S2)) {
+  if (ARL_S2$CALLABLE[i] == "FALSE") {
+    ARL_S2$CALLABLE[i] <- "Non-callable"
+  } else {
+    ARL_S2$CALLABLE[i] <- "Callable"
+  }
+}
+
+
+
+
+#SELF_REPRTD_GREEN_INSTR_INDCTR
+
+ARL_S2$SELF_REPRTD_GREEN_INSTR_INDCTR[ARL_S2$SELF_REPRTD_GREEN_INSTR_INDCTR == "TRUE"]<-
+  "YES"
+
+#Coupon rate
+cpn_intervals <- cut(ARL_S2$CPN, breaks = c(0, 2.99, 4.999, 15), labels = c("0_3(%)", "3_5(%)", "5_8.5(%)"))
+
+ARL_S2 <- ARL_S2 %>% mutate(CPN_Group = cpn_intervals)
+
+#SPREAD_AT_ISSUANCE_TO_WORST
+Sp_at_iss_intervals <- cut(ARL_S2$SPREAD_AT_ISSUANCE_TO_WORST,
+                           breaks = c(quantile(ARL_S2$SPREAD_AT_ISSUANCE_TO_WORST, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c("Less than 17", "17_57", "57_100", "Higher than 100"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(S_AT_Iss = Sp_at_iss_intervals)
+
+
+#DUR_ADJ_MID
+DUR_ADJ_MID_intervals <- cut(ARL_S2$DUR_ADJ_MID,
+                           breaks = c(quantile(ARL_S2$DUR_ADJ_MID, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c(" Less than 2.8", "2.8_4.8", "4.8_7", "Higher than 7"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(DAM = DUR_ADJ_MID_intervals)
+
+
+
+#DUR_MID
+DUR_MID_intervals <- cut(ARL_S2$DUR_MID,
+                           breaks = c(quantile(ARL_S2$DUR_MID, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c("Less than 2.9", "2.9_4.9", "4.9_7.3", " Higher than 7.3"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(DM = DUR_MID_intervals)
+
+
+
+#	YIELD_ON_ISSUE_DATE
+Y_on_Iss_Date_intervals <- cut(ARL_S2$YIELD_ON_ISSUE_DATE,
+                           breaks = c(quantile(ARL_S2$YIELD_ON_ISSUE_DATE, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c(" Less than 1.7", "1.7_2.4", "2.4_3.2", "Higher than 3.2"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(Y_OID = Y_on_Iss_Date_intervals)
+
+
+
+
+#	ISSUE_PX
+
+#1-labeling price at issuance
+
+ARL_S2 <- ARL_S2 %>%
+  mutate(
+    Iss_pri._spread = case_when(
+      is.na(ISSUE_PX) ~ NA_character_,
+      ISSUE_PX == 100 ~ "At Par",
+      ISSUE_PX < 100 ~ "At Discount",
+      ISSUE_PX > 100 ~ "At Premium"
+    )
+  )
+
+#2-Labeling the quartiles of the discount or premium  
+
+# ARL <- ARL %>%
+#   mutate(
+#     Iss._pri_int = case_when(
+#       is.na(ISSUE_PX) ~ NA_character_,
+#       ISSUE_PX == 100 ~ "Par (100)",
+#       ISSUE_PX < 100 ~ paste0("Disc.[74.5_100)" ),
+#       ISSUE_PX > 100 ~ paste0("Prem. ", cut(ifelse(ISSUE_PX > 100, ISSUE_PX, NA), breaks = 4))
+#     )
+#   )
+# 
+# ARL$Iss._pri_int <- str_replace_all(ARL$Iss._pri_int, ",", "-")
+
+#AMT_ISSUED
+ARL_S2$log_AMT_ISSUED <- log(ARL_S2$AMT_ISSUED)
+
+Amt_issued_intervals <- cut(ARL_S2$log_AMT_ISSUED,
+                           breaks = c(quantile(ARL_S2$log_AMT_ISSUED, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c("Less than 14", "14_15", "15_16", "Higher than 16"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(Amt_iss_int = Amt_issued_intervals)
+
+#MUNI_ISSUE_SIZE
+ARL_S2$log_MUNI_ISSUE_SIZE <- log(ARL_S2$MUNI_ISSUE_SIZE)
+
+MUNI_ISSUE_SIZE_intervals <- cut(ARL_S2$log_MUNI_ISSUE_SIZE,
+                           breaks = c(quantile(ARL_S2$log_MUNI_ISSUE_SIZE, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c("Less than 17", "17_18.7", "18.7_19.5", "Higher than 19.5"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(MUNI_ISSUE_SIZE_int = MUNI_ISSUE_SIZE_intervals)
+
+
+#SHORT_AND_LONG_TERM_DEBT
+ARL_S2$Log_DEBT <- log(ARL_S2$SHORT_AND_LONG_TERM_DEBT)
+
+Debt_intervals <- cut(ARL_S2$Log_DEBT,
+                           breaks = c(quantile(ARL_S2$Log_DEBT, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c("Less than 5", "5-6.5", "6.5_8", "Higher than 8"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(S_L_DEBT = Debt_intervals)
+
+
+#8.	SALES_REV_TURN
+ARL_S2$Log_Sale_Turn <- log(ARL_S2$SALES_REV_TURN)
+
+Sale_intervals <- cut(ARL_S2$Log_Sale_Turn,
+                           breaks = c(quantile(ARL_S2$Log_Sale_Turn, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c("Less than 3.5", "3.5-4.6", "4.6_6.5", "Higher than 8.5"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(SALES_REV_TURN_int = Sale_intervals)
+
+
+
+#MTY-YEARS
+
+MTY_YEARS_intervals <- cut(ARL_S2$`MTY-YEARS`,
+                           breaks = c(quantile(ARL_S2$`MTY-YEARS`, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c(" Less than 8", "8_12.3", "12.3_17", "Higher than 17"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(MTY_YEARS_int = MTY_YEARS_intervals)
+
+#ISSUE_DT and Maturity
+ARL_S2$Y_l_day <- as.Date(paste(ARL_S2$year, "-12-31", sep = ""), format = "%Y-%m-%d")
+
+
+for (i in 1:nrow(ARL_S2)){
+  ARL_S2$Active_years[i] <- yearFraction(ymd(ARL_S2$ISSUE_DT[i]) 
+                                   , ymd(ARL_S2$Y_l_day[i]), dayCounters = 12)
+  ARL_S2$years_to_maturity[i] <- yearFraction(ymd(ARL_S2$Y_l_day[i]) 
+                                   , ymd(ARL_S2$MATURITY[i]), dayCounters = 12)
+  
+}
+
+active_years_interval <- cut(ARL_S2$Active_years,
+                           breaks = c(quantile(ARL_S2$Active_years, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c(" Less than 1.1", "1.1_2.3", "2.3_4.1", "Higher than 4.1"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(Active_years_int = active_years_interval)
+
+
+years_to_maturity_interval <- cut(ARL_S2$years_to_maturity,
+                           breaks = c(quantile(ARL_S2$years_to_maturity, na.rm = TRUE)), na.rm = TRUE,
+                           labels =  c(" Less than 4.7", "4.7_9.4", "9.4_14.4", "Higher than 14.4"), include.lowest = TRUE)
+
+ARL_S2 <- ARL_S2 %>% mutate(years_to_maturity_int = years_to_maturity_interval)
+
+
+
+
+```
+
+label missing with char "NA"
+```{r}
+
+ARL_S2$BB_COMPOSITE[is.na(ARL_S2$BB_COMPOSITE)] <- "Not_Rated"
+ARL_S2$SELF_REPRTD_GREEN_INSTR_INDCTR[is.na(ARL_S2$SELF_REPRTD_GREEN_INSTR_INDCTR)] <- "Not labelled"
+ARL_S2$RTG_FITCH[is.na(ARL_S2$RTG_FITCH)] <- "Not_Rated"
+ARL_S2$RTG_FITCH_LONG[is.na(ARL_S2$RTG_FITCH_LONG)] <- "Not_Rated"
+
+ARL_S2$S_AT_Iss <- as.character(ARL_S2$S_AT_Iss)
+ARL_S2$S_AT_Iss[is.na(ARL_S2$S_AT_Iss)] <- "NA"
+
+ARL_S2$S_AT_Iss <- as.character(ARL_S2$S_AT_Iss)
+ARL_S2$S_AT_Iss[is.na(ARL_S2$S_AT_Iss)] <- "NA"
+
+ARL_S2$DAM <- as.character(ARL_S2$DAM)
+ARL_S2$DAM[is.na(ARL_S2$DAM)] <- "NA"
+
+ARL_S2$DM <- as.character(ARL_S2$DM)
+ARL_S2$DM[is.na(ARL_S2$DM)] <- "NA"
+
+ARL_S2$Y_OID <- as.character(ARL_S2$Y_OID)
+ARL_S2$Y_OID[is.na(ARL_S2$Y_OID)] <- "NA"
+
+ARL_S2$Iss_pri._spread <- as.character(ARL_S2$Iss_pri._spread)
+ARL_S2$Iss_pri._spread[is.na(ARL_S2$Iss_pri._spread)] <- "NA"
+
+ARL_S2$Amt_iss_int <- as.character(ARL_S2$Amt_iss_int)
+ARL_S2$Amt_iss_int[is.na(ARL_S2$Amt_iss_int)] <- "NA"
+
+ARL_S2$MUNI_ISSUE_SIZE_int <- as.character(ARL_S2$MUNI_ISSUE_SIZE_int)
+ARL_S2$MUNI_ISSUE_SIZE_int[is.na(ARL_S2$MUNI_ISSUE_SIZE_int)] <- "NA"
+
+ARL_S2$MTY_YEARS_int <- as.character(ARL_S2$MTY_YEARS_int)
+ARL_S2$MTY_YEARS_int[is.na(ARL_S2$MTY_YEARS_int)] <- "NA"
+
+ARL_S2$Active_years_int <- as.character(ARL_S2$Active_years_int)
+ARL_S2$Active_years_int[is.na(ARL_S2$Active_years_int)] <- "NA"
+
+ARL_S2$years_to_maturity_int <- as.character(ARL_S2$years_to_maturity_int)
+ARL_S2$years_to_maturity_int[is.na(ARL_S2$years_to_maturity_int)] <- "NA"
+
+ARL_S2$S_L_DEBT <- as.character(ARL_S2$S_L_DEBT)
+ARL_S2$S_L_DEBT[is.na(ARL_S2$S_L_DEBT)] <- "NA"
+
+ARL_S2$SALES_REV_TURN_int <- as.character(ARL_S2$SALES_REV_TURN_int)
+ARL_S2$SALES_REV_TURN_int[is.na(ARL_S2$SALES_REV_TURN_int)] <- "NA"
+
+
+```
+
+
+Add prefix for features
+```{r}
+ARL_S2$BB_COMPOSITE <- paste("BB_rating", ARL_S2$BB_COMPOSITE, sep = " : ")
+
+ARL_S2$MUNI_TAX_PROV <- paste("Tax", ARL_S2$MUNI_TAX_PROV, sep = " : ")
+
+ARL_S2$CPN_TYP <- paste("CPN TYP", ARL_S2$CPN_TYP, sep = " : ")
+
+ARL_S2$CPN_Group <- paste("CPN", ARL_S2$CPN_Group, sep = " : ")
+
+ARL_S2$MARKET_ISSUE <- paste("Market", ARL_S2$MARKET_ISSUE, sep = " : ")
+
+ARL_S2$CALLABLE <- paste("Call", ARL_S2$CALLABLE, sep = " : ")
+
+ARL_S2$MUNI_PURPOSE <- paste("UOP", ARL_S2$MUNI_PURPOSE, sep = " : ")
+
+ARL_S2$FINANCING_TYPE <- paste("FIN. TYP", ARL_S2$FINANCING_TYPE, sep = " : ")
+
+ARL_S2$ISSUER_BULK <- paste("Issuer Name", ARL_S2$ISSUER_BULK, sep = " : ")
+
+ARL_S2$MUNI_LONG_INDUSTRY_TYP <- paste("Issuer Sector", ARL_S2$MUNI_LONG_INDUSTRY_TYP, sep = " : ")
+ARL_S2$RTG_FITCH_LONG <- paste("RTG Long Rating", ARL_S2$RTG_FITCH_LONG, sep = " : ")
+ARL_S2$RTG_FITCH <- paste("RTG Rating", ARL_S2$RTG_FITCH, sep = " : ")
+ARL_S2$S_AT_Iss <- paste("S OID", ARL_S2$S_AT_Iss, sep = " : ")
+ARL_S2$DAM <- paste("DU_Adj_MID", ARL_S2$DAM, sep = " : ")
+ARL_S2$DM <- paste("DU_MID", ARL_S2$DM, sep = " : ")
+ARL_S2$Y_OID <- paste("Y_OID", ARL_S2$Y_OID, sep = " : ")
+
+ARL_S2$Iss_pri._spread <- paste("Pricing TYP", ARL_S2$Iss_pri._spread, sep = " : ")
+
+# ARL_S2$Iss._pri_int <- paste("Issue Price Interval", ARL_S2$Iss._pri_int, sep = " : ")
+
+ARL_S2$Amt_iss_int <- paste("Issued Amt", ARL_S2$Amt_iss_int, sep = " : ")
+
+ARL_S2$MUNI_ISSUE_SIZE_int <- paste("Muni Issued Size", ARL_S2$MUNI_ISSUE_SIZE_int, sep = " : ")
+
+ARL_S2$MTY_YEARS_int <- paste("Maturity OID", ARL_S2$MTY_YEARS_int, sep = " : ")
+ARL_S2$SELF_REPRTD_GREEN_INSTR_INDCTR <- paste("Self Rep. Gr.",  ARL_S2$SELF_REPRTD_GREEN_INSTR_INDCTR, sep = " : ")
+
+ARL_S2$S_L_DEBT <- paste("Debt",  ARL_S2$S_L_DEBT, sep = " : ")
+
+ARL_S2$SALES_REV_TURN_int <- paste("SALES REV",  ARL_S2$SALES_REV_TURN_int, sep = " : ")
+
+ARL_S2$Active_years_int <- paste("Active years",  ARL_S2$Active_years_int, sep = " : ")
+
+ARL_S2$years_to_maturity_int <- paste("R Ys to Maturity",  ARL_S2$years_to_maturity_int, sep = " : ")
+
+```
+
+Remove redundant features
+```{r}
+
+
+ARL_final_feat_S2 <- 
+  ARL_S2 %>% select(!(c(Med_S2 ,CPN_TYP, CRNCY, MAKE_WHOLE_CALL_TYPE,MUNI_FORM, SUPER_SINKER,
+                                  ID_CUSIP, Mea_S2,Mea_SL, CPN, CPN_TYP,CPN_FREQ,
+                                 CRNCY, ISSUE_DT, MATURITY,
+                             SPREAD_AT_ISSUANCE_TO_WORST, DUR_ADJ_MID, 
+                     DUR_MID,ISSUE_PX, YIELD_ON_ISSUE_DATE, AMT_ISSUED,
+                     MUNI_ISSUE_SIZE, IS_SUBORDINATED, 
+                     SALES_REV_TURN, log_AMT_ISSUED, log_MUNI_ISSUE_SIZE,
+                     SHORT_AND_LONG_TERM_DEBT, `MTY-YEARS`, `State Code`, Region, Y_l_day,
+                     Active_years, years_to_maturity, Log_DEBT, Log_Sale_Turn, S_L_DEBT,
+                     SALES_REV_TURN_int, RTG_FITCH_LONG, RTG_FITCH,DM)))
+
+```
+
+
+
+subset dataset for each year
+```{r}
+
+ARL_2020_S2 <- ARL_final_feat_S2 %>%  filter(year == 2020) %>% select(!c(year))
+ARL_2021_S2 <- ARL_final_feat_S2 %>%  filter(year == 2021) %>% select(!c(year))
+ARL_2022_S2 <- ARL_final_feat_S2 %>%  filter(year == 2022) %>% select(!c(year))
+ARL_2023_S2 <- ARL_final_feat_S2 %>%  filter(year == 2023) %>% select(!c(year))
+ARL_total_S2 <- ARL_final_feat_S2 %>% select(!c(year))
+
+```
+
+
+Remove missing values
+```{r}
+ARL_2020_S2 <- ARL_2020_S2[complete.cases(ARL_2020_S2),]
+ARL_2021_S2 <- ARL_2021_S2[complete.cases(ARL_2021_S2),]
+ARL_2022_S2 <- ARL_2022_S2[complete.cases(ARL_2022_S2),]
+ARL_2023_S2 <- ARL_2023_S2[complete.cases(ARL_2023_S2),]
+ARL_total_S2 <- ARL_total_S2[complete.cases(ARL_total_S2),]
+
+```
+
+
+Convert all features to factors
+```{r}
+ARL_2020_S2 <-ARL_2020_S2 %>%  mutate_all(as.factor)
+ARL_2021_S2 <-ARL_2021_S2 %>%  mutate_all(as.factor)
+ARL_2022_S2 <-ARL_2022_S2 %>%  mutate_all(as.factor)
+ARL_2023_S2 <-ARL_2023_S2 %>%  mutate_all(as.factor)
+ARL_total_S2 <-ARL_total_S2 %>%  mutate_all(as.factor)
+
+```
+
+
+convert dataframe to transaction format
+```{r}
+
+#2020
+Cal2020tr_S2 <- ARL_2020_S2 %>%
+  unite(item, everything(), sep = ",")
+
+write.csv(Cal2020tr_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2020tr_S2.csv", quote = FALSE, row.names = FALSE)
+
+
+#2021
+Cal2021tr_S2 <- ARL_2021_S2 %>%
+  unite(item, everything(), sep = ",")
+
+write.csv(Cal2021tr_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2021tr_S2.csv", quote = FALSE, row.names = FALSE)
+
+
+#2022
+Cal2022tr_S2 <- ARL_2022_S2 %>%
+  unite(item, everything(), sep = ",")
+
+write.csv(Cal2022tr_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2022tr_S2.csv", quote = FALSE, row.names = FALSE)
+
+
+
+#2023
+Cal2023tr_S2 <- ARL_2023_S2 %>%
+  unite(item, everything(), sep = ",")
+
+write.csv(Cal2023tr_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2023tr_S2.csv", quote = FALSE, row.names = FALSE)
+
+
+#Total
+Caltottr_S2 <- ARL_total_S2 %>%
+  unite(item, everything(), sep = ",")
+
+write.csv(Caltottr_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Caltottr_S2.csv", quote = FALSE, row.names = FALSE)
+
+
+```
+
+
+Importing transaction file
+```{r}
+
+tr2020_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2020tr_S2.csv", format = "basket", sep = ",")
+
+
+tr2021_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2021tr_S2.csv", format = "basket", sep = ",")
+
+tr2022_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2022tr_S2.csv", format = "basket", sep = ",")
+
+
+tr2023_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2023tr_S2.csv", format = "basket", sep = ",")
+
+trtot_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Caltottr_S2.csv", format = "basket", sep = ",")
+
+```
+
+
+Generating Rules (positive and negative
+```{r}
+
+PP.association.rules_S2 <- apriori(trtot_S2, parameter = list(supp=0.001, conf=0.001, maxlen=10),appearance = list(default="lhs",rhs="S+"))
+
+NP.association.rules_S2 <- apriori(trtot_S2, parameter = list(supp=0.001, conf=0.001, maxlen=10),appearance = list(default="lhs",rhs="S-"))
+
+# PNP.association.rules_S2 <- apriori(trtot_S2, parameter = list(supp=0.001, conf=0.001, maxlen=10),appearance = list(default="lhs",rhs= c ("S+","S-")))
+
+
+```
+
+
+Rules scatterplots and statestics
+```{r}
+plot(PP.association.rules_S2)
+
+summary(quality(PP.association.rules_S2)$confidence)
+
+summary(quality(NP.association.rules_S2)$confidence)
+```
+
+
+Add supp_conf measure
+```{r}
+
+#Positive itemsets
+Pquality_scores_S2 <- quality(PP.association.rules_S2)
+
+Psupp_conf_S2 <- Pquality_scores_S2$support * Pquality_scores_S2$confidence
+
+slot(PP.association.rules_S2, "quality")$supp_conf <- Psupp_conf_S2
+ 
+#Negative itemsets
+Nquality_scores_S2 <- quality(NP.association.rules_S2)
+
+Nsupp_conf_S2 <- Nquality_scores_S2$support * Nquality_scores_S2$confidence
+
+slot(NP.association.rules_S2, "quality")$supp_conf <- Nsupp_conf_S2
+
+
+
+
+
+
+```
+
+
+Filter rules with support and confidence thresholds 
+(based on the quantile of generated rules)
+```{r}
+
+PsubRules_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 ]
+
+NsubRules_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 ]
+
+```
+
+
+Non-nested rules (general rules with different orders)
+```{r}
+
+PsubRules_Order_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 2 ]
+
+NsubRules_Order_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 2 ]
+
+
+PO3_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 3 ]
+
+NO3_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 3 ]
+
+
+PO4_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 ]
+
+NO4_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 ]
+
+PO5_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 5 ]
+
+NO5_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 5 ]
+
+PO6_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 6 ]
+
+NO6_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 6 ]
+
+
+```
+
+
+```{r}
+inspect(head(NsubRules_Order_S2, n = 10, by = "confidence"))
+
+plot((head(NO6_S2, n = 10, by = "confidence")), method = "paracoord", measure = "confidence", shading = "lift")
+
+```
+
+
+
+
+Filter rules one Itemset
+```{r}
+PsubRules_Order_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 2 ]
+
+NsubRules_Order_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 2 ]
+
+```
+
+
+```{r}
+inspect(head(PsubRules_Order_S2, n = 10, by = "confidence"))
+
+inspect(head(NsubRules_Order_S2, n = 10, by = "confidence"))
+
+```
+
+
+
+Exporting tables for first order rules
+```{r}
+xtable(inspect(head(PsubRules_Order_S2, n = 10, by = "confidence")))
+
+xtable(inspect(head(NsubRules_Order_S2, n = 10, by = "confidence")))
+
+
+```
+
+```{r}
+Ptop10subRules_S2 <- head(PsubRules_Order_S2, n = 10, by = "confidence")
+
+Ntop10subRules_S2 <- head(NsubRules_Order_S2, n = 10, by = "confidence")
+
+```
+
+
+Positive spreads plots for order 1 rules
+```{r}
+
+inspect(head(PsubRules_Order_S2, n = 10, by = "confidence"))
+
+plot(Ptop10subRules_S2, method = "paracoord", measure = "support", shading = "confidence")
+
+plot(Ptop10subRules_S2, method = "grouped", measure = "support", shading = "confidence")
+
+plot(Ptop10subRules_S2, method = "graph",  engine = "htmlwidget", measure = "confidence")
+
+plot(Ptop10subRules_S2, method = "graph",  engine = "ggplot2", measure = "confidence", color = 100)
+
+
+```
+
+
+Negative spreads plots for order 1 rules
+```{r}
+
+plot(Ntop10subRules_S2, method = "paracoord", measure = "support", shading = "confidence")
+
+plot(Ntop10subRules_S2, method = "grouped", measure = "confidence", shading = "lift")
+
+plot(Ntop10subRules_S2, method = "graph",  engine = "htmlwidget", measure = "confidence")
+
+plot(Ntop10subRules_S2, method = "graph",  engine = "ggplot2", measure = "confidence", color = 100)
+
+
+```
+
+```{r}
+PN_top10subRules_S2_O <- c(Ptop10subRules_S2, Ntop10subRules_S2)
+
+plot(PN_top10subRules_S2_O, method = "grouped", measure = "confidence", shading = "support")
+```
+
+Second order rules (nesting first order rules)
+
+
+Filter rules  for positive 
+```{r}
+
+nested_rules_P_S2 <- c("Tax : FED TAXABLE/ST TAX-EXEMPT", 
+                  "Pricing TYP : At Par", 
+                  "R Ys to Maturity : Higher than 14.4", 
+                  "Maturity OID : Higher than 17",
+                  "S OID : Higher than 100", "DU_Adj_MID : Higher than 7",
+                  "Y_OID : Higher than 3.2", "S OID : 57_100", "Call : Callable"
+                  , "R Ys to Maturity : 9.4_14.4")
+
+
+PsubRules_Order3_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 3 & lhs(PP.association.rules_S2) %in% nested_rules_P_S2]
+
+Ptop10subRules3_S2 <- head(PsubRules_Order3_S2, n = 10, by = "confidence")
+
+```
+
+
+Positive spreads plots for order 3 rules
+```{r}
+inspect(head(PsubRules_Order3_S2, by = "confidence"))
+plot(Ptop10subRules3_S2, method = "paracoord", measure = "support", shading = "confidence")
+
+plot(Ptop10subRules3_S2, method = "grouped", measure = "confidence", shading = "lift")
+
+plot(Ptop10subRules3_S2, method = "graph",  engine = "htmlwidget", measure = "confidence")
+
+plot(Ptop10subRules3_S2, method = "graph",  engine = "ggplot2", measure = "confidence", color = 100)
+
+inspect(head(NsubRules_Order_S2, n = 10, by = "confidence"))
+```
+
+Filter rules for Negative order 3
+```{r}
+
+nested_rules_N_S2 <- c("S OID : Less than 17", "Y_OID :  Less than 1.7", "Maturity OID :  Less than 8", "Call : Non-callable", "R Ys to Maturity :  Less than 4.7", "Maturity OID : 8_12.3", "R Ys to Maturity : 4.7_9.4", "DU_Adj_MID :  Less than 2.8", "Pricing TYP : At Premium", "Issued Amt : Less than 14")
+
+
+NsubRules_Order3_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 3 & lhs(NP.association.rules_S2) %in% nested_rules_N_S2]
+
+Ntop10subRules3_S2 <- head(NsubRules_Order3_S2, n = 10, by = "confidence")
+
+
+
+```
+
+
+Negative spreads plots for order 3 rules
+```{r}
+
+plot(Ntop10subRules3_S2, method = "paracoord", measure = "support", shading = "confidence")
+
+plot(Ntop10subRules3_S2, method = "grouped", measure = "confidence", shading = "lift")
+
+plot(Ntop10subRules3_S2, method = "graph",  engine = "htmlwidget", measure = "confidence")
+
+plot(Ntop10subRules3_S2, method = "graph",  engine = "ggplot2", measure = "confidence", color = 100)
+
+inspect(head(NsubRules_Order_S2, n = 10, by = "confidence"))
+```
+
+```{r}
+inspect(head(PsubRules_Order3_S2, n = 10, by = "confidence"))
+
+```
+
+Order 4 rules for positive spreads
+```{r}
+nested_rules1_S2 <- c("Tax : FED TAXABLE/ST TAX-EXEMPT", "Pricing TYP : At Par")
+nested_rules2_S2 <- c("Tax : FED TAXABLE/ST TAX-EXEMPT", "BB_rating : Not_Rated")
+
+nested_rules3_S2 <- c("Tax : FED TAXABLE/ST TAX-EXEMPT", "Market : REVENUE BONDS")
+
+nested_rules4_S2 <- c("Tax : FED TAXABLE/ST TAX-EXEMPT", "Self Rep. Gr. : YES")
+
+nested_rules5_S2 <- c("Pricing TYP : At Par", "Self Rep. Gr. : YES")
+
+nested_rules6_S2 <- c("Active years :  Less than 1.1", "Call : Callable")
+
+nested_rules7_S2 <- c("DU_Adj_MID : Higher than 7", "S OID : Higher than 100")
+
+nested_rules8_S2 <- c("Market : REVENUE BONDS", "S OID : Higher than 100")
+
+nested_rules9_S2 <- c("CPN : 3_5(%)", "Y_OID : Higher than 3.2")
+
+nested_rules10_S2 <- c("CPN : 3_5(%)", "S OID : Higher than 100")
+
+
+PsubRules_4Order_1_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules1_S2 ]
+
+
+PsubRules_4Order_2_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.65 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules2_S2]
+
+PsubRules_4Order_3_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules3_S2]
+
+
+PsubRules_4Order_4_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules4_S2]
+
+
+PsubRules_4Order_5_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules5_S2]
+
+
+PsubRules_4Order_6_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules6_S2]
+
+PsubRules_4Order_7_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules7_S2]
+
+
+PsubRules_4Order_8_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules8_S2]
+
+
+PsubRules_4Order_9_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules9_S2]
+
+
+PsubRules_4Order_10_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.60 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 4 & lhs(PP.association.rules_S2) %ain% nested_rules10_S2]
+
+PsubRules_4Order_S2 <- unique(c(PsubRules_4Order_1_S2, PsubRules_4Order_2_S2, PsubRules_4Order_3_S2, PsubRules_4Order_4_S2, PsubRules_4Order_5_S2, PsubRules_4Order_6_S2, PsubRules_4Order_7_S2, PsubRules_4Order_8_S2, PsubRules_4Order_9_S2, PsubRules_4Order_10_S2))
+
+
+```
+
+```{r}
+
+inspect(head(PsubRules_4Order_S2, n = 10, by = "confidence"))
+
+plot(PsubRules_4Order_S2, method = "paracoord", measure = "support", shading = "confidence")
+
+plot(PsubRules_4Order_S2, method = "graph",  engine = "htmlwidget", measure = "confidence", shading = "lift")
+
+
+```
+
+
+```{r}
+inspect(head(unique(Ntop10subRules3_S2), n = 10, by = "confidence"))
+
+```
+
+Order 4 rules for Negative spreads
+```{r}
+
+nested_rules_N_1_S2 <- c("Call : Non-callable", "Tax : FED & ST TAX-EXEMPT")
+nested_rules_N_2_S2 <- c("Call : Non-callable", "Pricing TYP : At Premium")
+
+nested_rules_N_3_S2 <- c("R Ys to Maturity :  Less than 4.7", "Tax : FED & ST TAX-EXEMPT")
+
+nested_rules_N_4_S2 <- c("Maturity OID :  Less than 8", "Tax : FED & ST TAX-EXEMPT")
+
+nested_rules_N_5_S2 <- c("Pricing TYP : At Premium", "R Ys to Maturity :  Less than 4.7")
+
+nested_rules_N_6_S2 <- c("Maturity OID :  Less than 8", "Pricing TYP : At Premium")
+
+nested_rules_N_7_S2 <- c("CPN : 5_8.5(%)", "Call : Non-callable")
+nested_rules_N_8_S2 <- c("Call : Non-callable", "S OID : Less than 17")
+
+nested_rules_N_9_S2 <- c("CPN : 5_8.5(%)", "Maturity OID :  Less than 8")
+
+nested_rules_N_10_S2 <- c("CPN : 5_8.5(%)", "R Ys to Maturity :  Less than 4.7")
+
+
+NsubRules_4Order_1_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_1_S2]
+
+NsubRules_4Order_2_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_2_S2]
+
+
+NsubRules_4Order_3_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_3_S2]
+
+
+NsubRules_4Order_4_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_4_S2]
+
+NsubRules_4Order_5_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_5_S2]
+
+
+NsubRules_4Order_6_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_6_S2]
+
+
+NsubRules_4Order_7_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_7_S2]
+
+
+NsubRules_4Order_8_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_8_S2]
+
+
+NsubRules_4Order_9_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_9_S2]
+
+NsubRules_4Order_10_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.4 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_10_S2]
+
+NsubRules_4Order_S2 <- unique(c(NsubRules_4Order_1_S2, NsubRules_4Order_2_S2, NsubRules_4Order_3_S2, NsubRules_4Order_4_S2, NsubRules_4Order_5_S2, NsubRules_4Order_6_S2, NsubRules_4Order_7_S2, NsubRules_4Order_8_S2, NsubRules_4Order_9_S2, NsubRules_4Order_10_S2))
+
+Ntop10subRules_4Order_S2 <- head(NsubRules_4Order_S2, n = 10, by = "confidence")
+```
+
+
+```{r}
+
+
+inspect(head(Ntop10subRules_4Order_S2, n = 10, by = "confidence"))
+
+plot(Ntop10subRules_4Order_S2, method = "paracoord", measure = "support", shading = "confidence")
+
+plot(Ntop10subRules_4Order_S2, method = "graph",  engine = "htmlwidget", measure = "confidence", shading = "lift")
+
+
+```
+
+```{r}
+
+
+inspect(head(PsubRules_4Order_S2, n = 10, by = "confidence"))
+
+```
+
+
+Order 5 rules for positive spreads
+```{r}
+nested_rules1_S2 <- c("Pricing TYP : At Par", 
+                   "Self Rep. Gr. : YES", "Tax : FED TAXABLE/ST TAX-EXEMPT")
+nested_rules2_S2 <- c("Active years :  Less than 1.1", 
+                   "Call : Callable","Tax : FED & ST TAX-EXEMPT")
+
+nested_rules3_S2 <- c("Call : Callable", "DU_Adj_MID : Higher than 7", "S OID : Higher than 100")
+
+nested_rules4_S2 <- c("Call : Callable", "Market : REVENUE BONDS", "S OID : Higher than 100")
+
+nested_rules5_S2 <- c("Call : Callable", "CPN : 3_5(%)", "S OID : Higher than 100")
+
+
+
+
+PsubRules_5Order_1_S2 <-PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 5 & lhs(PP.association.rules_S2) %ain% nested_rules1_S2 ]
+
+
+PsubRules_5Order_2_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 5 & lhs(PP.association.rules_S2) %ain% nested_rules2_S2]
+
+PsubRules_5Order_3_S2<-PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 5 & lhs(PP.association.rules_S2) %ain% nested_rules3_S2]
+
+
+PsubRules_5Order_4_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 5 & lhs(PP.association.rules_S2) %ain% nested_rules4_S2]
+
+
+PsubRules_5Order_5_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 5 & lhs(PP.association.rules_S2) %ain% nested_rules5_S2]
+
+
+
+
+
+PsubRules_5Order_S2 <- unique(c(PsubRules_5Order_1_S2, PsubRules_5Order_2_S2, PsubRules_5Order_3_S2, PsubRules_5Order_4_S2, PsubRules_5Order_5_S2))
+
+
+```
+
+
+```{r}
+
+inspect(head(PsubRules_5Order_S2, n = 10, by = "confidence"))
+
+plot(PsubRules_5Order_S2, method = "paracoord", measure = "confidence", shading = "lift")
+
+plot(PsubRules_5Order_S2, method = "graph",  engine = "htmlwidget", measure = "confidence", shading = "lift")
+
+```
+
+
+Order 4 rules for Negative spreads
+```{r}
+
+nested_rules_N_1_S2 <- c("Call : Non-callable", "FIN. TYP : NEW MONEY", 
+                      "S OID : Less than 17")
+
+nested_rules_N_2_S2 <- c("DU_Adj_MID :  Less than 2.8",
+                      "R Ys to Maturity :  Less than 4.7", "Tax : FED & ST TAX-EXEMPT")
+
+nested_rules_N_3_S2 <- c("Call : Non-callable", "FIN. TYP : NEW MONEY",
+                      "Tax : FED & ST TAX-EXEMPT")
+
+nested_rules_N_4_S2 <- c("Call : Non-callable", "CPN : 5_8.5(%)", "S OID : Less than 17")
+
+nested_rules_N_5_S2 <- c("DU_Adj_MID :  Less than 2.8", "Pricing TYP : At Premium",
+                      "R Ys to Maturity :  Less than 4.7")
+
+nested_rules_N_6_S2 <- c("Call : Non-callable", "CPN : 5_8.5(%)", "Tax : FED & ST TAX-EXEMPT")
+
+nested_rules_N_7_S2 <- c("Call : Non-callable", "DU_Adj_MID :  Less than 2.8", "Tax : FED & ST TAX-EXEMPT")
+
+nested_rules_N_8_S2 <- c("Call : Non-callable", "Pricing TYP : At Premium", "Y_OID :  Less than 1.7")
+
+nested_rules_N_9_S2 <- c("Call : Non-callable", "S OID : Less than 17", "Tax : FED & ST TAX-EXEMPT")
+
+nested_rules_N_10_S2 <- c("Call : Non-callable", "Tax : FED & ST TAX-EXEMPT", "Y_OID :  Less than 1.7")
+
+
+NsubRules_5Order_1_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_1_S2]
+
+NsubRules_5Order_2_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_2_S2]
+
+
+NsubRules_5Order_3_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_3_S2]
+
+
+NsubRules_5Order_4_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_4_S2]
+
+NsubRules_5Order_5_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_5_S2]
+
+
+NsubRules_5Order_6_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_6_S2]
+
+
+NsubRules_5Order_7_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_7_S2]
+
+
+
+NsubRules_5Order_8_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_8_S2]
+
+
+NsubRules_5Order_9_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_9_S2]
+
+NsubRules_5Order_10_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 4 & lhs(NP.association.rules_S2) %in% nested_rules_N_10_S2]
+
+NsubRules_5Order_S2 <- unique(c(NsubRules_5Order_1_S2, NsubRules_5Order_2_S2, NsubRules_5Order_3_S2, NsubRules_5Order_4_S2, NsubRules_5Order_5_S2, NsubRules_5Order_6_S2, NsubRules_5Order_7_S2, NsubRules_5Order_8_S2, NsubRules_5Order_9_S2, NsubRules_5Order_10_S2))
+
+```
+
+
+```{r}
+
+Ntop10subRules_5Order_S2 <- head(NsubRules_5Order_S2, n = 10, by = "confidence")
+
+inspect(head(Ntop10subRules_5Order_S2, n = 10, by = "confidence"))
+
+plot(Ntop10subRules_5Order_S2, method = "paracoord", measure = "confidence", shading = "lift")
+
+plot(Ntop10subRules_5Orde_S2r, method = "graph",  engine = "htmlwidget", measure = "confidence", shading = "lift")
+```
+
+Condition on specific attributes
+
+
+
+1- Conditioning on Structuring attributes
+
+```{r}
+#Callability
+
+Con.rules.call_Pos_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.65 & quality(PP.association.rules_S2)$support > 0.1 & lhs(PP.association.rules_S2) %ain% c("Call : Callable")& size(PP.association.rules_S2) == 3]
+
+
+Con.rules.noncall_Pos_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.01 & quality(PP.association.rules_S2)$support > 0.01 & lhs(PP.association.rules_S2) %ain% c("Call : Non-callable")& size(PP.association.rules_S2) == 3]
+
+
+Con.rules.call_Neg_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.01 & quality(NP.association.rules_S2)$support > 0.01 & lhs(NP.association.rules_S2) %ain% c("Call : Callable")& size(NP.association.rules_S2) == 3]
+
+Con.rules.noncall_Neg_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.45 & quality(NP.association.rules_S2)$support > 0.1 & lhs(NP.association.rules_S2) %ain% c("Call : Non-callable")& size(NP.association.rules_S2) == 3]
+
+inspect(head(Con.rules.noncall_Neg_S2, n = 10, by = "supp_conf"))
+
+
+#Tax 
+
+Con.rules.fedTax_Pos_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.01 & quality(PP.association.rules_S2)$support > 0.01 & lhs(PP.association.rules_S2) %ain% c("Tax : FED TAXABLE/ST TAX-EXEMPT")& size(PP.association.rules_S2) == 3]
+
+
+Con.rules.taxexemp_Pos_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.01 & quality(PP.association.rules_S2)$support > 0.01 & lhs(PP.association.rules_S2) %ain% c("Tax : FED & ST TAX-EXEMPT")& size(PP.association.rules_S2) == 3]
+
+
+Con.rules.fedTax_Neg_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.001 & quality(NP.association.rules_S2)$support > 0.001 & lhs(NP.association.rules_S2) %ain% c("Tax : FED TAXABLE/ST TAX-EXEMPT")& size(NP.association.rules_S2) == 3]
+
+Con.rules.taxexemp_Neg_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.01 & quality(NP.association.rules_S2)$support > 0.1 & lhs(NP.association.rules_S2) %ain% c("Tax : FED & ST TAX-EXEMPT")& size(NP.association.rules_S2) == 3]
+
+
+
+
+#plot
+plot(head(Con.rules.fedTax_Pos_S2, n = 10, by = "supp_conf"), method = "graph",  engine = "htmlwidget", shading = "supp_conf")
+
+
+
+```
+
+
+Partial conditioning 
+```{r}
+
+#UOP
+Con.rules.UOP_Pos_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.65 & quality(PP.association.rules_S2)$support > 0.1 & lhs(PP.association.rules_S2) %pin% "UOP : "  ]
+
+
+
+Con.rules.UOP_Neg_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.40 & quality(NP.association.rules_S2)$support > 0.1 & lhs(NP.association.rules_S2) %pin% "UOP : "  ]
+
+
+#Iss. Sect
+
+Con.rules.Sec_P_S2 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.65 & quality(PP.association.rules_S2)$support > 0.1 & lhs(PP.association.rules_S2) %pin% "Issuer Sector : "  ]
+
+Con.rules.Sec_N_S2 <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.40 & quality(NP.association.rules_S2)$support > 0.1 & lhs(NP.association.rules_S2) %pin% "Issuer Sector : "  ]
+```
+
+
+
+Stack barchart for attribute frequency for positive rules
+```{r}
+sectors <- c(
+  "Issuer Sector : General",
+  "Issuer Sector : Water",
+  "Issuer Sector : General Obligation",
+  "Issuer Sector : School District",
+  "Issuer Sector : Power",
+  "Issuer Sector : Pollution",
+  "Issuer Sector : Utilities",
+  "Issuer Sector : Mello-Roos"
+)
+
+plots <- list()
+
+for (sector in sectors) {
+  sector_rules_n <- PP.association.rules_S2[
+    quality(PP.association.rules_S2)$confidence > 0.001 &
+      quality(PP.association.rules_S2)$support > 0.001 &
+      lhs(PP.association.rules_S2) %ain% sector
+  ]
+ 
+  # Convert to transactions
+  lhs_items <- as(lhs(sector_rules_n), "transactions")
+ 
+  # Calculate item frequencies
+  item_freq <- itemFrequency(lhs_items)
+ 
+  # Create data frame
+  item_freq_df <- data.frame(attribute_category = names(item_freq), frequency = item_freq, row.names = NULL) %>%
+    filter(!(frequency %in% c(0.000, 1.00)))  %>%
+    mutate(
+      attribute = sapply(strsplit(attribute_category, " : "), `[`, 1),
+      category = sapply(strsplit(attribute_category, " : "), `[`, 2)
+    ) %>%
+    group_by(attribute) %>%
+    mutate(aggregated_frequency = sum(frequency)) %>%
+    arrange(desc(aggregated_frequency)) %>%
+    ungroup() %>%
+    mutate(attribute_category = fct_reorder(attribute_category, frequency, .fun = min))
+  
+  
+  item_freq_df <- item_freq_df %>% filter(!(attribute %in% c("Issuer Name", "UOP")) & !(attribute_category %in% c("Tax : AMT/ST TAX-EXEMPT", "Tax : FED TAXABLE", "Tax : FED BQ/ST TAX-EXEMPT", "Tax : FED TAX-EXEMPT", "Tax : FED TAXABLE/ST TAXABLE" )))
+  
+  
+  item_freq_df_top10 <- item_freq_df %>%
+  distinct(attribute, .keep_all = TRUE) %>%
+  arrange(desc(aggregated_frequency)) %>%
+  head(10) %>% select(attribute)
+  
+  item_freq_df_final <- item_freq_df %>% filter(attribute %in% item_freq_df_top10$attribute)
+  
+ 
+  # Create plot with single color and correct stacking order
+  plot <- ggplot(item_freq_df_final, aes(x = frequency, y = fct_reorder(attribute, aggregated_frequency), group = attribute_category)) +
+    geom_bar(stat = "identity", position = "stack", width = 0.6, color = "black", fill = "skyblue") +
+    geom_text(aes(label = category),
+              position = position_stack(vjust = 0.5), color = "black", size = 3, hjust = 0.5) +
+    labs(x = "Frequency", y = "Attribute") +
+    theme_minimal() +
+    theme(axis.text.y = element_text(hjust = 0),
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 1))
+ 
+ 
+  plots[[sector]] <- plot
+}
+
+# Plot for each sector
+for (i in 1:length(plots)) {
+  print(plots[[i]])
+}
+
+
+```
+
+
+
+Stack bar chart for attributes frequency (Negative)
+
+```{r}
+
+
+sectors <- c(
+  "Issuer Sector : General",
+  "Issuer Sector : Water",
+  "Issuer Sector : General Obligation",
+  "Issuer Sector : School District",
+  "Issuer Sector : Power",
+  "Issuer Sector : Pollution",
+  "Issuer Sector : Utilities",
+  "Issuer Sector : Mello-Roos"
+)
+
+plots <- list()
+
+for (sector in sectors) {
+  sector_rules_n <- NP.association.rules_S2[
+    quality(NP.association.rules_S2)$confidence > 0.001 &
+      quality(NP.association.rules_S2)$support > 0.001 &
+      lhs(NP.association.rules_S2) %ain% sector
+  ]
+ 
+  # Convert to transactions
+  lhs_items <- as(lhs(sector_rules_n), "transactions")
+ 
+  # Calculate item frequencies
+  item_freq <- itemFrequency(lhs_items)
+ 
+  # Create data frame
+  item_freq_df <- data.frame(attribute_category = names(item_freq), frequency = item_freq, row.names = NULL) %>%
+    filter(!(frequency %in% c(0.000, 1.00)))  %>%
+    mutate(
+      attribute = sapply(strsplit(attribute_category, " : "), `[`, 1),
+      category = sapply(strsplit(attribute_category, " : "), `[`, 2)
+    ) %>%
+    group_by(attribute) %>%
+    mutate(aggregated_frequency = sum(frequency)) %>%
+    arrange(desc(aggregated_frequency)) %>%
+    ungroup() %>%
+    mutate(attribute_category = fct_reorder(attribute_category, frequency, .fun = min))
+  
+  
+  item_freq_df <- item_freq_df %>% filter(!(attribute %in% c("Issuer Name", "UOP")) & !(attribute_category %in% c("Tax : AMT/ST TAX-EXEMPT", "Tax : FED TAXABLE", "Tax : FED BQ/ST TAX-EXEMPT", "Tax : FED TAX-EXEMPT", "Tax : FED TAXABLE/ST TAXABLE" )))
+  
+  
+  item_freq_df_top10 <- item_freq_df %>%
+  distinct(attribute, .keep_all = TRUE) %>%
+  arrange(desc(aggregated_frequency)) %>%
+  head(10) %>% select(attribute)
+  
+  item_freq_df_final <- item_freq_df %>% filter(attribute %in% item_freq_df_top10$attribute)
+  
+ 
+  # Create plot with single color and correct stacking order
+  plot <- ggplot(item_freq_df_final, aes(x = frequency, y = fct_reorder(attribute, aggregated_frequency), group = attribute_category)) +
+    geom_bar(stat = "identity", position = "stack", width = 0.6, color = "black", fill = "skyblue") +
+    geom_text(aes(label = category),
+              position = position_stack(vjust = 0.5), color = "black", size = 3, hjust = 0.5) +
+    labs(x = "Frequency", y = "Attribute") +
+    theme_minimal() +
+    theme(axis.text.y = element_text(hjust = 0),
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 1))
+ 
+ 
+  plots[[sector]] <- plot
+}
+
+# Plot for each sector
+for (i in 1:length(plots)) {
+  print(plots[[i]])
+}
+
+```
+
+
+
+
+UOP for sectors
+
+```{r}
+
+
+
+
+uop_colors <- c(
+  "ADVANCE REFUNDING" = "#1f77b4",
+  "CIVIC CONVENTION CENTER" = "#ff7f0e",
+  "CURRENT REFUNDING" = "skyblue",
+  "ELEC. LT. & PWR. IMPTS." = "#d62728",
+  "GREEN PURPOSE" = "darkgreen",
+  "HLTH- HOSP- NURSHOME IMPS" = "#8c564b",
+  "INDUSTRIAL IMPS." = "#e377c2",
+  "MISC. PURPOSES" = "#7f7f7f",
+  "NURSING HOMES" = "#bcbd22",
+  "PARKING FACILITY IMPS." = "#17becf",
+  "PRT- AIRPRT & MARINA IMPS" = "#1f77b4",
+  "PUBLIC FACILITIES" = "gold",
+  "PUBLIC IMPS." = "#2ca02c",
+  "RECREATIONAL FAC. IMPS." = "#d62728",
+  "REFUNDING BONDS" = "#9467bd",
+  "REFUNDING NOTES" = "brown",
+  "REPAYMENT OF BANK LOAN" = "#e377c2",
+  "RESOURCE RECOVERY IMPS." = "#7f7f7f",
+  "SCHOOL IMPS." = "#bcbd22",
+  "SEWER IMPS." = "darkblue",
+  "STATE MF HSG" = "#1f77b4",
+  "STUDENT HOUSING" = "#ff7f0e",
+  "TRANSIT IMPS." = "green",
+  "UNIV. & COLLEGE IMPS." = "black",
+  "WATER UTILITY IMPS." = "grey"
+)
+
+
+sectors <- c(
+  "Issuer Sector : General",
+  "Issuer Sector : Water",
+  "Issuer Sector : General Obligation",
+  "Issuer Sector : School District",
+  "Issuer Sector : Power",
+  "Issuer Sector : Pollution",
+  "Issuer Sector : Utilities",
+  "Issuer Sector : Mello-Roos"
+)
+
+for (sector in sectors) {
+  sector_rules_p <- PP.association.rules_S2[
+    quality(PP.association.rules_S2)$confidence > 0.001 &
+      quality(PP.association.rules_S2)$support > 0.001 &
+      lhs(PP.association.rules_S2) %ain% c(sector)
+  ]
+  
+  sector_rules_n <- NP.association.rules_S2[
+    quality(NP.association.rules_S2)$confidence > 0.001 &
+      quality(NP.association.rules_S2)$support > 0.001 &
+      lhs(NP.association.rules_S2) %ain% c(sector)
+  ]
+  
+  lhs_items_p <- as(lhs(sector_rules_p), "transactions")
+  lhs_items_n <- as(lhs(sector_rules_n), "transactions")
+  
+  item_freq_p <- itemFrequency(lhs_items_p)
+  item_freq_n <- itemFrequency(lhs_items_n)
+  
+  attr_names_p <- strsplit(names(item_freq_p[grep("^UOP : ", names(item_freq_p))]), " : ")
+  attr_names_n <- strsplit(names(item_freq_n[grep("^UOP : ", names(item_freq_n))]), " : ")
+  
+  Sec_UOP_p <- data.frame(UOP = sapply(attr_names_p, `[`, 2),
+                          frequency = as.vector(item_freq_p[grep("^UOP : ", names(item_freq_p))])) %>%
+    filter(!(frequency == 0.000000)) %>%
+    mutate(Spread = "S(+)")
+  
+  Sec_UOP_n <- data.frame(UOP = sapply(attr_names_n, `[`, 2),
+                          frequency = as.vector(item_freq_n[grep("^UOP : ", names(item_freq_n))])) %>%
+    filter(!(frequency == 0.000000)) %>%
+    mutate(Spread = "S(-)")
+  
+  Sec_UOP_pn <- rbind(Sec_UOP_p, Sec_UOP_n) %>% filter(UOP %in% c(
+  "GREEN PURPOSE",
+  "CURRENT REFUNDING",
+  "WATER UTILITY IMPS.",
+  "ADVANCE REFUNDING",
+  "TRANSIT IMPS.",
+  "PUBLIC IMPS.",
+  "SCHOOL IMPS.",
+  "PUBLIC FACILITIES",
+  "REFUNDING NOTES",
+  "SEWER IMPS.",
+  "ELEC. LT. & PWR. IMPTS.",
+  "RECREATIONAL FAC. IMPS."
+)  )
+  
+  print(
+    ggplot(Sec_UOP_pn, aes(x = Spread, y = frequency, fill = UOP)) +
+      geom_bar(stat = "identity", position = "stack", width = 0.6, color = "black") +
+      geom_text(aes(label = sprintf("%.2f", frequency), y = frequency),
+                position = position_stack(vjust = 0.5), color = "white", size = 3) +
+      scale_fill_manual(values = uop_colors) +  # Assigning colors
+      labs(x = "Spread", y = "Frequency") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1),
+            panel.border = element_rect(color = "black", fill = NA, linewidth = 1))
+  )
+}
+
+```
+
+
+
