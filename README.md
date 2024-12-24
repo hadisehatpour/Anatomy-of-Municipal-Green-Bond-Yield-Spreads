@@ -19,9 +19,11 @@ offer practical insights for green bond screening practice.
 
 The repository is organized into the following folders:
 
-### 1) Codes
+### 1) <details>
+  <summary>2) Codes</summary>
+</details>
 
->> This folder contains the R markdown developed for the paper's methodology. It is structured within the following folders:
+This folder contains the R markdown developed for the paper's methodology. It is structured within the following folders:
 
 1. **Spreads**  
    
@@ -37,10 +39,10 @@ The repository is organized into the following folders:
 
 
 ### 2) Data
-> This folder contains the US Treasury par yield data and data generated using the ARL technique. 
+This folder contains the US Treasury par yield data and data generated using the ARL technique. 
 ### 3) Paper
-> This folder contains the latest version of the paper and its associated supplementary materials, which can also be found at the following link:
-> [URL] 
+ This folder contains the latest version of the paper and its associated supplementary materials, which can also be found at the following link:
+ [URL] 
 
 
 
