@@ -19,4 +19,4 @@ offer practical insights for green bond screening practice.
 
 The repository is organized into the following folders:
 
-### 1) `Python_code`
+### 1) Spreads
