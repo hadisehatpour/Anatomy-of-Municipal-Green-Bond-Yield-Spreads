@@ -19,14 +19,11 @@ offer practical insights for green bond screening practice.
 
 The repository is organized into the following folders:
 
-### 1) Spreads
-### 2) ARL
-### 3) Spreads
-### 4) BMS
-### 5) ANOVA
-### 6) Spreads
-### 7) ARL_data
-### 8) US_Treasury_data
+### 1) Codes
+
+### 2) Data
+### 3) Paper
+
 
 
 
