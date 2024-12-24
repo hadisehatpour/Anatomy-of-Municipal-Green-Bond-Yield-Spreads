@@ -1,4 +1,4 @@
-# Anatomy of Municipal Green Bond Yield Spreads
+![image](https://github.com/user-attachments/assets/28000a2f-b789-4b2f-8ef3-6d5a18b627cf)# Anatomy of Municipal Green Bond Yield Spreads
 This repository is associated with the methodology presented in the paper titled **"Anatomy of Municipal Green Bond Yield Spreads"**.  
 A PDF version of the paper is accessible at [URL] or in the **"paper"** folder, which also contains the Supplementary Materials.
 # Abstract
@@ -21,26 +21,26 @@ The repository is organized into the following folders:
 
 ### 1) Codes
 
-#### 2) R_code
-
 > This folder contains the R markdown developed for the paper's methodology. It is structured within the following folders:
 
-1. **CCA**  
+1. **Spreads**  
    
 
-2. **climate**  
+2. **ARL**  
    
 
-3. **financial**  
+3. **ANOVA**  
    
 
-4. **pollution**  
+4. **BMS**  
    
 
 
 ### 2) Data
+> This folder contains the US Treasury par yield data and data generated using the ARL technique. 
 ### 3) Paper
-
+> This folder contains the latest version of the paper and its associated supplementary materials, which can also be found at the following link:
+> [URL] 
 
 
 
