@@ -19,7 +19,7 @@ offer practical insights for green bond screening practice.
 
 The repository is organized into the following folders:
 
- ### **1)`Code`**
+ 💚 ### **1)`Code`**
 
 This folder contains the R markdown developed for the paper's methodology. It is structured within the following folders:
 
