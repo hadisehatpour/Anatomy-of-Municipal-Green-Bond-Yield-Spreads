@@ -21,22 +21,21 @@ The repository is organized into the following folders:
 
 ### 1) Codes
 
-## 2) R_code
+#### 2) R_code
 
-> This folder contains the R code developed for the analysis of the paper. It is structured within the following folders:
+> This folder contains the R markdown developed for the paper's methodology. It is structured within the following folders:
 
 1. **CCA**  
-   This folder contains the code for the extraction of the Canonical Correlation Analysis given in `cca_cali.R` and the code for producing the helioplots in the paper and in the description above (only some) in `cca_circular_barplot.R`.
+   
 
 2. **climate**  
-   This folder contains the code for the extraction, pre-processing, feature engineering, and PCA/kPCA computations of the climate data.
+   
 
 3. **financial**  
-   This folder contains the code for the extraction, pre-processing, feature engineering, and PCA/kPCA computations of the financial data.
+   
 
 4. **pollution**  
-   This folder contains the code for the extraction, pre-processing, feature engineering, and PCA/kPCA computations of the pollution data.
-
+   
 
 
 ### 2) Data
