@@ -14,3 +14,9 @@ spreads tend to relate to maturity-related attributes. Sector-specific differenc
 ratings, issue sizes, and use of proceeds have also been identified. The distinctive spread
 structuring attributes highlight the dynamic and heterogeneous nature of green bonds and
 offer practical insights for green bond screening practice.
+
+## Organization of the Repository
+
+The repository is organized into the following folders:
+
+### 1) `Python_code`
