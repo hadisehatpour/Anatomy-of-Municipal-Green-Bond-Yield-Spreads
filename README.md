@@ -21,7 +21,7 @@ The repository is organized into the following folders:
     <li><b>Approach 1 Spread.Rmd</b>: This R Markdown file is used for a tenor-specific time series approach that calculates green bond spreads based on yield to maturity (YTM).</li>
     <li><b>Approach 2 Spread.Rmd</b>: This R Markdown file is used for a yield curve time series approach that calculates green bond spreads based on the YTM term structure.</li>
 </ul>
-   
+---
 
 3. **ARL**  
    
