@@ -15,10 +15,10 @@ This folder contains the R markdown developed for the paper's methodology. It is
 1. ***Spreads***
  In this folder, the following R Markdown files are used for the proposed novel bond spread calculations:
 
-# 1) Approach 1 Spread.Rmd
+*1) Approach 1 Spread.Rmd*
 This R Markdown file is used for a tenor-specific time series approach that calculates green bond spreads based on yield to maturity (YTM).
 
-#2) Approach 2 Spreader.Rmd
+*2) Approach 2 Spreader.Rmd*
 This R Markdown file is used for a yield curve time series approach that calculates green bond spreads based on the YTM term structure.
    
 
