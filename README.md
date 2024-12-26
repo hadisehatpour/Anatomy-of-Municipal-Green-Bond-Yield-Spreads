@@ -27,25 +27,63 @@ The repository is organized into the following folders:
 
 
 
+<b>2) ARL</b>
+<p>In In this folder, the following R Markdown files are used for the screening process employing a machine learning technique called Association Rules Learning::</p>
 
+<ul>
+    <li><b>ARL_S1.Rmd</b>: This R-markdown uses the first spread for association rule learning.</li>
+    <li><b>ARL_S2.Rmd</b>: This R-markdown uses the second spread for association rule learning.</li>
+    <li><b>ARL_Med_Extreme_S1.Rmd</b>: This R-markdown uses the first spread for finding rules associated with extreme spread values.</li>
+    <li><b>ARL_Med_Extreme_S2.Rmd</b>: This R-markdown uses the second spread for finding rules associated with extreme spread values.</li>
+    <li><b>ARL_Stability_S1.Rmd</b>: This R Markdown file uses the first spread to determine the temporal consistency of the strong identified rules.</li>
+    <li><b>ARL_Stability_S2.Rmd</b>: This R Markdown file uses the second spread to determine the temporal consistency of the strong identified rules.</li>
 
-
-
-
-
-
-
-
-
-
-2. **ARL**  
+</ul>
    
 
-3. **ANOVA**  
+<b>3) ANOVA</b>
+<p>In this folder, the following R Markdown file is used to test the statistical significance of the ARL results (Order 2):</p>
+
+<ul>
+    <li><b>ANOVA.Rmd</b>: This R-markdown uses the first spread for association rule learning.</li>
+</ul>
    
 
-4. **BMS**  
+<b>4) ANOVA</b>
+<p>In this folder, the following R Markdown file is used for Bayesian model selection:</p>
+
+<ul>
+    <li><b>ANOVA.Rmd</b>: This R Markdown file is used for Bayesian model selection utilizing both spreads.</li>
+
+</ul> 
    
+
+
+
+##################################################### DATA   #####################
+
+
+<div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; font-weight: bold;">
+    <h3>1) Data</h3>
+</div>
+<p>This folder contains some data sets used for analysis in this paper. It is structured within the following folders:</p>
+
+---
+
+<b>1) ARL</b>
+<p>In this folder, the following R Markdown files are used for the proposed novel bond spread calculations:</p>
+
+<ul>
+    <li><b>Approach 1 Spread.Rmd</b>: This R Markdown file is used for a tenor-specific time series approach that calculates green bond spreads based on yield to maturity (YTM).</li>
+    <li><b>Approach 2 Spread.Rmd</b>: This R Markdown file is used for a yield curve time series approach that calculates green bond spreads based on the YTM term structure.</li>
+</ul>
+
+
+
+
+
+
+
 
 ### 2) Data
 This folder contains the US Treasury par yield data and data generated using the ARL technique. 
