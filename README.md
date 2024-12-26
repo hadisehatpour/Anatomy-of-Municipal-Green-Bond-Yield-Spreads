@@ -73,8 +73,8 @@ The repository is organized into the following folders:
 <p>In this folder, the following R Markdown files are used for the proposed novel bond spread calculations:</p>
 
 <ul>
-    <li><b>Ext: This folder contains data for results from ARL for extreme spread values.</li>
-    <li><b>Rules: This folder contains data for results from ARL for rules in various orders.</li>
+    <li><b>Ext:</b> This folder contains data for results from ARL for extreme spread values.</li>
+    <li><b>Rules:</b> This folder contains data for results from ARL for rules in various orders.</li>
 </ul>
 
 <b>2) US_Treasury </b>
