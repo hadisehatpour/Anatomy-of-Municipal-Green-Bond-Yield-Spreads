@@ -78,7 +78,7 @@ The repository is organized into the following folders:
 </ul>
 
 <b>2) US_Treasury </b>
-In this folder, This folder  contains US Treasury par yield data
+<p> This folder contains US Treasury par yield data. <p>
 
 
 
@@ -88,7 +88,7 @@ In this folder, This folder  contains US Treasury par yield data
 <p>This folder contains the latest version of the paper and its associated supplementary materials, which can also be found at the following link:
  [URL]:</p>
 
-
+---
 
 
 
