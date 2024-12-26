@@ -69,7 +69,7 @@ The repository is organized into the following folders:
 
 ---
 
-<b><span style="color: gold;">★</span>) ARL</b>
+<b><span style="color: gold;">★</span>) ARL_data</b>
 <p>In this folder, the following R Markdown files are used for the proposed novel bond spread calculations:</p>
 
 <ul>
@@ -77,7 +77,7 @@ The repository is organized into the following folders:
     <li><b>Rules:</b> This folder contains data for results from ARL for rules in various orders.</li>
 </ul>
 
-<b><span style="color: gold;">★</span>) US_Treasury</b>
+<b><span style="color: gold;">★</span>) US_Treasury_data</b>
 <p> This folder contains US Treasury par yield data. <p>
 
 
