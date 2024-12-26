@@ -27,7 +27,7 @@ The repository is organized into the following folders:
 
 
 
-<b>2) ARL</b>
+<b><span style="color: gold;">★</span>) ARL</b>
 <p>In In this folder, the following R Markdown files are used for the screening process employing a machine learning technique called Association Rules Learning::</p>
 
 <ul>
