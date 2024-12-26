@@ -38,13 +38,13 @@ The repository is organized into the following folders:
 
 
 
-3. **ARL**  
+2. **ARL**  
    
 
-4. **ANOVA**  
+3. **ANOVA**  
    
 
-5. **BMS**  
+4. **BMS**  
    
 
 ### 2) Data
