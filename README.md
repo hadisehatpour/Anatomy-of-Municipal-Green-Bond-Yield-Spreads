@@ -8,18 +8,18 @@ Exploring the attributes of the rapidly evolving green bond market is crucial fo
 
 The repository is organized into the following folders:
 
+
   ### **1)`Codes`**
 
 This folder contains the R markdown developed for the paper's methodology. It is structured within the following folders:
 
-#### 1) Spreads
- In this folder, the following R Markdown files are used for the proposed novel bond spread calculations:
+<h3>1) Spreads</h3>
+<p>In this folder, the following R Markdown files are used for the proposed novel bond spread calculations:</p>
 
-#####  Approach 1 Spread.Rmd
-This R Markdown file is used for a tenor-specific time series approach that calculates green bond spreads based on yield to maturity (YTM).
-
-#####  Approach 2 Spread.Rmd
-This R Markdown file is used for a yield curve time series approach that calculates green bond spreads based on the YTM term structure.
+<ul>
+    <li><b>Approach 1 Spread.Rmd</b>: This R Markdown file is used for a tenor-specific time series approach that calculates green bond spreads based on yield to maturity (YTM).</li>
+    <li><b>Approach 2 Spread.Rmd</b>: This R Markdown file is used for a yield curve time series approach that calculates green bond spreads based on the YTM term structure.</li>
+</ul>
    
 
 3. **ARL**  
@@ -30,11 +30,6 @@ This R Markdown file is used for a yield curve time series approach that calcula
 
 5. **BMS**  
    
-<div style="background-color: #f0f0f0; padding: 10px; font-weight: bold; border-radius: 5px;">
-    <b>1) Codes</b>
-</div>
-<p>This folder contains the R markdown developed for the paper's methodology. It is structured within the following folders:</p>
-
 
 ### 2) Data
 This folder contains the US Treasury par yield data and data generated using the ARL technique. 
