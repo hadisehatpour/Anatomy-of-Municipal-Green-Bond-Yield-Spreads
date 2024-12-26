@@ -16,7 +16,7 @@ The repository is organized into the following folders:
 
 ---
 
-<b>1) Spreads</b>
+<b><span style="color: gold;">★</span>) Spreads</b>
 <p>In this folder, the following R Markdown files are used for the proposed novel bond spread calculations:</p>
 
 <ul>
@@ -41,7 +41,7 @@ The repository is organized into the following folders:
 </ul>
    
 
-<b>3) ANOVA</b>
+<b><span style="color: gold;">★</span>) ANOVA</b>
 <p>In this folder, the following R Markdown file is used to test the statistical significance of the ARL results (Order 2):</p>
 
 <ul>
@@ -49,11 +49,11 @@ The repository is organized into the following folders:
 </ul>
    
 
-<b>4) ANOVA</b>
+<b><span style="color: gold;">★</span>) BMS</b>
 <p>In this folder, the following R Markdown file is used for Bayesian model selection:</p>
 
 <ul>
-    <li><b>ANOVA.Rmd</b>: This R Markdown file is used for Bayesian model selection utilizing both spreads.</li>
+    <li><b>BMS.Rmd</b>: This R Markdown file is used for Bayesian model selection utilizing both spreads.</li>
 
 </ul> 
    
