@@ -12,7 +12,7 @@ The repository is organized into the following folders:
 
 This folder contains the R markdown developed for the paper's methodology. It is structured within the following folders:
 
-1) ***Spreads***
+### 1) Spreads
  In this folder, the following R Markdown files are used for the proposed novel bond spread calculations:
 
 #### 1. Approach 1 Spread.Rmd
