@@ -9,7 +9,7 @@ Exploring the attributes of the rapidly evolving green bond market is crucial fo
 The repository is organized into the following folders:
 
 <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; font-weight: bold;">
-    <h3>1) Codes</h3>
+    <h3><span style="color: green;">1)</span> Codes</h3>
 </div>
 <p>This folder contains the R markdown developed for the paper's methodology. It is structured within the following folders:</p>
 
