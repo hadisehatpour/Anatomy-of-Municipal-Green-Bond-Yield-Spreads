@@ -82,13 +82,11 @@ The repository is organized into the following folders:
 
 
 
-<div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; font-weight: bold;">
-    <h3>2) Paper</h3>
+<div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
+    <h3 style="font-weight: bold;">3) Paper</h3>
 </div>
-<p>This folder contains the latest version of the paper and its associated supplementary materials, which can also be found at the following link:
- [URL]:</p>
+<p>This folder contains the latest version of the paper and its associated supplementary materials, which can also be found at the following link: [URL]</p>
 
----
 
 
 
