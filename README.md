@@ -15,7 +15,7 @@ The repository is organized into the following folders:
 
 ---
 
-<h2>1) Spreads</h2>
+<b>1) Spreads</b>
 <p>In this folder, the following R Markdown files are used for the proposed novel bond spread calculations:</p>
 
 <ul>
