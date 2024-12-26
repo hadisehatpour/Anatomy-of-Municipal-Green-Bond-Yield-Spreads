@@ -94,8 +94,6 @@ The repository is organized into the following folders:
 
 ## Cite
 
-
-
-
+If you use this code in your project, please cite:
 
 
