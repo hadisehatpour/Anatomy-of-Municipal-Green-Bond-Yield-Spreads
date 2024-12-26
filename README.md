@@ -23,7 +23,7 @@ The repository is organized into the following folders:
     <li><b>Approach 2 Spread.Rmd</b>: This R Markdown file is used for a yield curve time series approach that calculates green bond spreads based on the YTM term structure.</li>
 </ul>
 
----
+
 
 
 
