@@ -85,7 +85,7 @@ The repository is organized into the following folders:
 <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
     <h3 style="font-weight: bold;">3) Paper</h3>
 </div>
-<p>This folder contains the latest version of the paper which can also be found at the following link: [[URL]](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5075265)</p>
+<p>This folder contains the latest version of the paper, which can also be found at the following link: (https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5075265)</p>
 
 
 
