@@ -1,46 +1,35 @@
----
-title: "Baysian Model Selection"
-author: "Hadi"
-date: "2024-02-02"
-output: html_document
----
 
-Import transaction file for first spread
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Import transaction file for the first spread
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
+tr2020 <- read.transactions("C:/.../Cal2020tr.csv", format = "basket", sep = ",")
 
-tr2020 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2020tr.csv", format = "basket", sep = ",")
+tr2021 <- read.transactions("C:/.../Cal2021tr.csv", format = "basket", sep = ",")
 
+tr2022 <- read.transactions("C:/.../Cal2022tr.csv", format = "basket", sep = ",")
 
-tr2021 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2021tr.csv", format = "basket", sep = ",")
+tr2023 <- read.transactions("C:/.../Cal2023tr.csv", format = "basket", sep = ",")
 
-tr2022 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2022tr.csv", format = "basket", sep = ",")
-
-
-tr2023 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2023tr.csv", format = "basket", sep = ",")
-
-trtot <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Caltottr.csv", format = "basket", sep = ",")
-
+trtot <- read.transactions("C:/.../Caltottr.csv", format = "basket", sep = ",")
 ```
-
-
-Importing transaction file for second spread
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Importing transaction file for the second spread
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
+tr2020_S2 <- read.transactions("C:/.../Cal2020tr_S2.csv", format = "basket", sep = ",")
 
-tr2020_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2020tr_S2.csv", format = "basket", sep = ",")
+tr2021_S2 <- read.transactions("C:/.../Cal2021tr_S2.csv", format = "basket", sep = ",")
 
+tr2022_S2 <- read.transactions("C:/.../Cal2022tr_S2.csv", format = "basket", sep = ",")
 
-tr2021_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2021tr_S2.csv", format = "basket", sep = ",")
+tr2023_S2 <- read.transactions("C:/.../Cal2023tr_S2.csv", format = "basket", sep = ",")
 
-tr2022_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2022tr_S2.csv", format = "basket", sep = ",")
-
-
-tr2023_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2023tr_S2.csv", format = "basket", sep = ",")
-
-trtot_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Caltottr_S2.csv", format = "basket", sep = ",")
-
+trtot_S2 <- read.transactions("C:/.../Caltottr_S2.csv", format = "basket", sep = ",")
 ```
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Generating Rules (positive and negative)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 #S1
 PP.association.rules <- apriori(trtot, parameter = list(supp=0.001, conf=0.001, maxlen=10),appearance = list(default="lhs",rhs="S+"))
@@ -53,10 +42,10 @@ PP.association.rules_S2 <- apriori(trtot_S2, parameter = list(supp=0.001, conf=0
 NP.association.rules_S2 <- apriori(trtot_S2, parameter = list(supp=0.001, conf=0.001, maxlen=10),appearance = list(default="lhs",rhs="S-"))
 
 ```
-
+%%%%%%%%%%%
 S1 Positive
+%%%%%%%%%%%
 ```{r}
-
 Pr_M_i <- 1/(length(unique(size(PP.association.rules)))-1)
 
 P_S1_sub_2 <- PP.association.rules[quality(PP.association.rules)$confidence > 0.65 & quality(PP.association.rules)$support > 0.1 & size(PP.association.rules) == 2]
@@ -75,7 +64,6 @@ P_D_M_i_4 <- sum(quality(P_S1_sub_4)$confidence)/length(P_S1_sub_4)
 P_D_M_i_5 <- sum(quality(P_S1_sub_5)$confidence)/length(P_S1_sub_5)
 P_D_M_i_6 <- sum(quality(P_S1_sub_6)$confidence)/length(P_S1_sub_6)
 
-
 Nor_mag <- (sum(P_D_M_i_2, P_D_M_i_3, P_D_M_i_4, P_D_M_i_5, P_D_M_i_6))* Pr_M_i
 
 Pr_Mi_D_2 <- P_D_M_i_2 * Nor_mag
@@ -84,11 +72,10 @@ Pr_Mi_D_4 <- P_D_M_i_4 * Nor_mag
 Pr_Mi_D_5 <- P_D_M_i_5 * Nor_mag
 Pr_Mi_D_6 <- P_D_M_i_6 * Nor_mag
 
-
 ```
-
-
+%%%%%%%%%%%
 S1 Negative
+%%%%%%%%%%%
 ```{r}
 
 Pr_M_i_N <- 1/(length(unique(size(NP.association.rules)))-1)
@@ -109,7 +96,6 @@ P_D_M_i_4_N <- sum(quality(N_S1_sub_4)$confidence)/length(N_S1_sub_4)
 P_D_M_i_5_N <- sum(quality(N_S1_sub_5)$confidence)/length(N_S1_sub_5)
 P_D_M_i_6_N <- sum(quality(N_S1_sub_6)$confidence)/length(N_S1_sub_6)
 
-
 Nor_mag_N <- (sum(P_D_M_i_2_N, P_D_M_i_3_N, P_D_M_i_4_N, P_D_M_i_5_N, P_D_M_i_6_N))* Pr_M_i_N
 
 Pr_Mi_D_2_N <- P_D_M_i_2_N * Nor_mag_N
@@ -119,13 +105,10 @@ Pr_Mi_D_5_N <- P_D_M_i_5_N * Nor_mag_N
 Pr_Mi_D_6_N <- P_D_M_i_6_N * Nor_mag_N
 
 
-
-
 ```
-
-
-
+%%%%%%%%%%%
 S2 Positive
+%%%%%%%%%%%
 ```{r}
 
 Pr_M_i_S2 <- 1/(length(unique(size(PP.association.rules)))-1)
@@ -138,33 +121,22 @@ P_S2_sub_4 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidenc
 
 P_S2_sub_5 <- PP.association.rules_S2[quality(PP.association.rules_S2)$confidence > 0.6 & quality(PP.association.rules_S2)$support > 0.1 & size(PP.association.rules_S2) == 5]
 
-
-
 P_D_M_i_2_S2 <- sum(quality(P_S2_sub_2)$confidence)/length(P_S2_sub_2)
 P_D_M_i_3_S2 <- sum(quality(P_S2_sub_3)$confidence)/length(P_S2_sub_3)
 P_D_M_i_4_S2 <- sum(quality(P_S2_sub_4)$confidence)/length(P_S2_sub_4)
 P_D_M_i_5_S2 <- sum(quality(P_S2_sub_5)$confidence)/length(P_S2_sub_5)
 
-
-
 Nor_mag_S2 <- (sum(P_D_M_i_2_S2, P_D_M_i_3_S2, P_D_M_i_4_S2, P_D_M_i_5_S2))* Pr_M_i_S2
-
-
-
 
 Pr_Mi_D_2_S2 <- P_D_M_i_2_S2 * Nor_mag_S2
 Pr_Mi_D_3_S2 <- P_D_M_i_3_S2 * Nor_mag_S2
 Pr_Mi_D_4_S2 <- P_D_M_i_4_S2 * Nor_mag_S2
 Pr_Mi_D_5_S2 <- P_D_M_i_5_S2 * Nor_mag_S2
-
-
-
 ```
-
-
+%%%%%%%%%%%
 S2 Negative
+%%%%%%%%%%%
 ```{r}
-
 Pr_M_i_S2_N <- 1/(length(unique(size(NP.association.rules)))-1)
 
 P_S2_sub_2_N <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.35 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 2]
@@ -175,27 +147,15 @@ P_S2_sub_4_N <- NP.association.rules_S2[quality(NP.association.rules_S2)$confide
 
 P_S2_sub_5_N <- NP.association.rules_S2[quality(NP.association.rules_S2)$confidence > 0.35 & quality(NP.association.rules_S2)$support > 0.1 & size(NP.association.rules_S2) == 5]
 
-
-
 P_D_M_i_2_S2_N <- sum(quality(P_S2_sub_2_N)$confidence)/length(P_S2_sub_2_N)
 P_D_M_i_3_S2_N <- sum(quality(P_S2_sub_3_N)$confidence)/length(P_S2_sub_3_N)
 P_D_M_i_4_S2_N <- sum(quality(P_S2_sub_4_N)$confidence)/length(P_S2_sub_4_N)
 P_D_M_i_5_S2_N <- sum(quality(P_S2_sub_5_N)$confidence)/length(P_S2_sub_5_N)
 
-
-
-
 Nor_mag_S2_N <- (sum(P_D_M_i_2_S2_N, P_D_M_i_3_S2_N, P_D_M_i_4_S2_N, P_D_M_i_5_S2_N))* Pr_M_i_S2_N
-
-
-
 Pr_Mi_D_2_S2_N <- P_D_M_i_2_S2_N * Nor_mag_S2_N
 Pr_Mi_D_3_S2_N <- P_D_M_i_3_S2_N * Nor_mag_S2_N
 Pr_Mi_D_4_S2_N <- P_D_M_i_4_S2_N * Nor_mag_S2_N
 Pr_Mi_D_5_S2_N <- P_D_M_i_5_S2_N * Nor_mag_S2_N
-
-
-
-
 
 ```
