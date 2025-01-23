@@ -1,10 +1,7 @@
----
-title: "Approach 1 for Spread Calculation"
-author: "Hadi"
-date: "2023-10-24"
-output: html_document
----
+
+%%%%%%%%%%%%%%
 Load libraries
+%%%%%%%%%%%%%%
 ```{r}
 library(splines2)
 library(splines)
@@ -32,9 +29,10 @@ library(scales)
 library(pdfetch)
 library(xtable)
 ```
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Function for calculating PVs using the observed yield to maturity for approach 1
 year_fraction = tau_n
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 bond_price_ytm_a1 <-
 function(ytm, year_fraction, coupon,
@@ -69,12 +67,11 @@ function(ytm, year_fraction, coupon,
   return(bond_price)
 }
   
-
-
 ```
 
-
-Calculate Green PVs based on the observed YTM 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Calculate Green PVs based on the observed YTM
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 for (i in 1:nrow(California)){
   
@@ -95,8 +92,9 @@ for (i in 1:nrow(California)){
 
 ```
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Function for calculating zero coupon yields
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 zcb_eq_ytm_a1 <- function(zcb_ytm, year_fraction,
                            face_value, bond_type, bond_price, 
@@ -109,12 +107,10 @@ zcb_eq_ytm_a1 <- function(zcb_ytm, year_fraction,
   }
 }
 
-
-
-
 ```
-
-Calculate Equivalent ZCB YTM of green bonds in approach 1 for dataset
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Calculate the Equivalent ZCB YTM of green bonds in approach 1 for the dataset
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 for (i in 1:nrow(California)){
    
@@ -134,13 +130,14 @@ for (i in 1:nrow(California)){
 
 ```
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Calculate  Reference Rates
 Import US Treasury Par yield Curve
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 #Daily Treasury Par Yield Curve Rates
 
-par_data <- read.csv("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Treasury/Par/daily_par_yield-curve-rates-1990-2023.csv")
+par_data <- read.csv("C:/.../daily_par_yield-curve-rates-1990-2023.csv")
 
 names(par_data)[-1] <- c("0.083", "0.167", "0.231", "0.333", "0.500", "1", "2", "3",
 "5", "7", "10", "20", "30")
@@ -156,9 +153,10 @@ par_tby <- as.xts(par_data_mat, order.by = par_data$Date)
 par_tby <- na.approx(par_tby, na.rm = FALSE)
 ```
 
-
-Visualization:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Visualization
 Curve Fitting for a specific day to test the goodness of fit (US Treasury par yield)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 D <- "2021-07-15"
 m1 <- 1
@@ -197,8 +195,9 @@ vertical_lines_x <- cuts
 abline(v = vertical_lines_x, col = "grey", lty = "dashed")
 ```
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Calculate the  equivalent US treasury yield for the green bonds each day
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 for (i in 1:nrow(California)) {
   x <- as.numeric(sort(names(par_tby)))
@@ -215,8 +214,9 @@ for (i in 1:nrow(California)) {
 }
 ```
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Calculate PVs based on the yields Treasury yield curve
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 for (i in 1:nrow(California)){
   
@@ -238,8 +238,9 @@ for (i in 1:nrow(California)){
 
 ```
 
-
-Calculate Equivalent reference ZCBYTM1 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Calculate Equivalent reference ZCBYTM1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 for (i in 1:nrow(California)){
    
@@ -258,17 +259,15 @@ for (i in 1:nrow(California)){
 }
 
 ```
-
-Calculate Spread 1 and simple differences of the YTM and rates
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Calculate Spread 1 and simple differences between the YTM and rates
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 
 California$S1 <- California$G_ZCB_YTM_1 - California$R_ZCB_YTM_1
 
-
-
 # California$S_rates <- 
 #   round ((California$yield - California$tresury_eq_yield), 2)
-
 
 California$year <- year(California$Date)
 
