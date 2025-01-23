@@ -1,12 +1,8 @@
----
-title: "Approach 2 for Spread Calculation"
-author: "Hadi"
-date: "2023-10-25"
-output: html_document
----
 
 
+%%%%%%%%%%%%%%
 Load libraries
+%%%%%%%%%%%%%%
 ```{r}
 library(splines2)
 library(splines)
@@ -35,10 +31,10 @@ library(feather)
 ```
 
 
-
+%%%%%%%%%%%%%%%%%
 Grouping Criteria
-
 Callable and Non_callable Bond dataset
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 Cal_callable <- California %>% filter(CALLABLE == "TRUE", CPN != 15)
 
@@ -48,10 +44,11 @@ summary(Cal_non_callable$CPN)
 
 ```
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Coupon intervals:
 Construct partitions based on the coupon intervals for
 California (Callable and non-callable)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 interval_non_call <- cut(Cal_non_callable$CPN, breaks = c(0, 2.99, 4.999, 7.69), labels = c("CPN_0_3", "CPN_3_5", "CPN_5_8"))
 Cal_non_callable <- Cal_non_callable %>% mutate(CPN_Group = interval_non_call)
@@ -60,10 +57,9 @@ interval_call <- cut(Cal_callable$CPN, breaks = c(0, 3.5, 4.999, 8.5), labels = 
 
 Cal_callable <- Cal_callable %>% mutate(CPN_Group = interval_call)
 ```
-
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Partitioning California dataset based on tax provinces
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 
 #NoN-CALLABLE
@@ -72,7 +68,6 @@ Partitioning California dataset based on tax provinces
 G1_nc_all <- 
   Cal_non_callable %>% 
   filter(CPN_Group == "CPN_0_3", Date >= "2020-01-01")
-
 
 #Non-callable bonds with coupon intervals of 3-5 percent excluding "FED TAXABLE/ST TAX-EXEMPT" Tax province
 G2_nc_op <- 
@@ -91,10 +86,7 @@ G3_nc_all <-
   Cal_non_callable %>% 
   filter(CPN_Group == "CPN_5_8", Date >= "2020-01-01")
 
-
 #CALLABLE
-
-
 #Callable bonds with coupon intervals of 0-3.5 percent excluding "FED TAXABLE/ST TAX-EXEMPT" Tax province
 G1_c_op <- 
   Cal_callable %>%
@@ -127,18 +119,10 @@ G2_c_ft <-
 G3_c_all <- Cal_callable %>% 
   filter(CPN_Group == "CPN_5_8.5", Date >= "2020-01-01")
 
-
-
-
 ```
-
-
-
-
-
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Function for calculating PVs using the fitted yields for approach 2 (EQ.10)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 
 bp_calculator_a2 <- function(x, y, m, cuts, bond_type, year_fraction, coupon_rate, 
@@ -173,11 +157,9 @@ bp_calculator_a2 <- function(x, y, m, cuts, bond_type, year_fraction, coupon_rat
 
 
 ```
-
-
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Calculating PVs using the green bootstraps curves for the bonds groups (EQ.10)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 for (i in 1:nrow(G1_nc_all)) {
   x <- G1_nc_all$YF[G1_nc_all$Date == G1_nc_all$Date[i]]
@@ -197,8 +179,9 @@ for (i in 1:nrow(G1_nc_all)) {
 }
 
 ```
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Function for calculating Eq. ZCB YTM (EQ.10)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 zcb_eq_YTM_2 <- function(zcb_ytm, year_fraction,
                            face_value, bond_type, bond_price, 
@@ -213,11 +196,11 @@ zcb_eq_YTM_2 <- function(zcb_ytm, year_fraction,
   }
 }
 
-
 ```
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Calculating Equivalent ZCB YTM of green bonds in approach 2 for dataset (EQ.10)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 for (i in 1:nrow(G3_c_op)) {
   year_fraction <- as.numeric(G3_c_op$YF[i])
@@ -235,30 +218,30 @@ for (i in 1:nrow(G3_c_op)) {
   }
 
 ```
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Calculating  Reference Rates
 Importing US Treasury Par yield Curve (EQ.11)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 #Daily Treasury Par Yield Curve Rates
 
-par_data <- read.csv("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Treasury/Par/daily_par_yield-curve-rates-1990-2023.csv")
+par_data <- read.csv("C:.../daily_par_yield-curve-rates-1990-2023.csv")
 
 names(par_data)[-1] <- c("0.083", "0.167", "0.231", "0.333", "0.500", "1", "2", "3",
 "5", "7", "10", "20", "30")
 par_data$Date <- dmy(par_data$Date)
 
-
 par_data_mat <- as.matrix(par_data)
 par_data_mat <- par_data_mat[, -1]
-
 
 par_tby <- as.xts(par_data_mat, order.by = par_data$Date)
 
 par_tby <- na.approx(par_tby, na.rm = FALSE)
 ```
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Calculating PVs based on the yields Treasury yield curve (EQ.11)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 
 for (i in 1:nrow(G2_c_ft)) {
@@ -278,10 +261,10 @@ for (i in 1:nrow(G2_c_ft)) {
   G2_c_ft$RPV_2[i] <- tr_p_2
 }
 
-
 ```
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Calculating Reference Equivalent ZCB YTM  in approach 2 for Dataset (EQ.11)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```{r}
 for (i in 1:nrow(G2_c_ft)) {
   year_fraction <- as.numeric(G2_c_ft$YF[i])
@@ -302,54 +285,49 @@ for (i in 1:nrow(G2_c_ft)) {
 
 ```
 
-
-Calculating Spread 2 and 3
+%%%%%%%%%%%%%%%%%%%%
+Calculating Spread 2
+%%%%%%%%%%%%%%%%%%%%
 ```{r}
 
 G2_c_ft$S2 <- round(G2_c_ft$GZCB_YTM_2 - G2_c_ft$RZCB_YTM_2, 2)
 
-G2_c_ft$S3 <- round(G2_c_ft$G_ZCB_YTM_1 - G2_c_ft$RZCB_YTM_2, 2)
-
 ```
 
-
-
-Save partions
+%%%%%%%%%%%%%%%
+Save partitions
+%%%%%%%%%%%%%%%
 ```{r}
-write_feather(G2_c_ft, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Approach 2 and 3/G2_c_ft.feather")
+write_feather(G2_c_ft, "C:/.../G2_c_ft.feather")
 
 write.csv(G2_c_ft,
-          file = "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Approach 2 and 3/G2_c_ft.csv",
+          file = "C:/.../G2_c_ft.csv",
           row.names = FALSE )
 
 ```
 
-
+%%%%%%%%%%%%%%%%%
 Import partitions
+%%%%%%%%%%%%%%%%%
 ```{r}
 
+G1_nc_all <- read_feather("C:/.../G1_nc_all.feather")
 
+G2_nc_op <- read_feather("C:/.../G2_nc_op.feather")
 
-G1_nc_all <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Partitions/G1_nc_all.feather")
+G2_nc_ft <- read_feather("C:/.../G2_nc_ft.feather")
 
-G2_nc_op <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Partitions/G2_nc_op.feather")
+G3_nc_all <- read_feather("C:/.../G3_nc_all.feather")
 
-G2_nc_ft <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Partitions/G2_nc_ft.feather")
+G1_c_op <- read_feather("C:/.../G1_c_op.feather")
 
-G3_nc_all <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Partitions/G3_nc_all.feather")
+G1_c_ft <- read_feather("C:/.../G1_c_ft.feather")
 
-G1_c_op <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Partitions/G1_c_op.feather")
+G2_c_op <- read_feather("C:/.../G2_c_op.feather")
 
-G1_c_ft <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Partitions/G1_c_ft.feather")
+G2_c_ft <- read_feather("C:/.../G2_c_ft.feather")
 
-
-G2_c_op <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Partitions/G2_c_op.feather")
-
-
-G2_c_ft <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Partitions/G2_c_ft.feather")
-
-G3_c_all <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/Partitions/G3_c_all.feather")
-
+G3_c_all <- read_feather("C:/.../G3_c_all.feather")
 
 
 #Combine partitions
@@ -357,18 +335,14 @@ G3_c_all <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Mu
 California_20_23 <- rbind(G1_nc_all, G2_nc_op, G2_nc_ft, G3_nc_all, G1_c_op, G1_c_ft, 
                  G2_c_op, G2_c_ft, G3_c_all)
 
-
-
 #Save the dataset
 
-write_feather(California_20_23, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/California_20_23.feather")
+write_feather(California_20_23, "C:/.../California_20_23.feather")
 
 write.csv(California_20_23,
-          file = "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/California_20_23.csv",
+          file = "C:/.../California_20_23.csv",
           row.names = FALSE )
 ```
-
-
 
 Summary Table
 ```{r}
@@ -461,8 +435,6 @@ G9 <- G3_c_all %>% summarise(
     Median = round(median(yield, na.rm = TRUE), 3),
     SD = round(sd(yield, na.rm = TRUE), 3)
   )
-
-
 
 Groups <- rbind(G1, G2, G3, G4, G5, G6, G7, G8, G9 )
 ```
