@@ -343,8 +343,9 @@ write.csv(California_20_23,
           file = "C:/.../California_20_23.csv",
           row.names = FALSE )
 ```
-
+%%%%%%%%%%%%%
 Summary Table
+%%%%%%%%%%%%%
 ```{r}
 G1 <-  G1_nc_all %>% summarise(
   Group = "1",
