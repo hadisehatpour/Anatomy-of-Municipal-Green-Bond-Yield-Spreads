@@ -1,9 +1,4 @@
----
-title: "Stability (First spread)"
-author: "Hadi"
-date: "2024-02-01"
-output: html_document
----
+
 Load libraries
 ```{r}
 library(arules)
@@ -20,10 +15,10 @@ library(feather)
 Load datasets
 ```{r}
 MLFeat <- 
-  read_excel(path ="C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine learning ARL/Data/Features.xlsx", na = c ("NA", "#N/A N/A", "#N/A Field Not Applicable", "#N/A Invalid Security"))
+  read_excel(path ="C:/.../Features.xlsx", na = c ("NA", "#N/A N/A", "#N/A Field Not Applicable", "#N/A Invalid Security"))
 
 
-California_20_23 <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/California_20_23.feather")
+California_20_23 <- read_feather("C:/.../California_20_23.feather")
 
 
 ```
@@ -448,21 +443,21 @@ convert dataframe to transaction format
 Cal2020tr <- ARL_2020 %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Cal2020tr, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2020tr.csv", quote = FALSE, row.names = FALSE)
+write.csv(Cal2020tr, "C:/.../Cal2020tr.csv", quote = FALSE, row.names = FALSE)
 
 
 #2021
 Cal2021tr <- ARL_2021 %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Cal2021tr, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2021tr.csv", quote = FALSE, row.names = FALSE)
+write.csv(Cal2021tr, "C:/.../Cal2021tr.csv", quote = FALSE, row.names = FALSE)
 
 
 #2022
 Cal2022tr <- ARL_2022 %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Cal2022tr, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2022tr.csv", quote = FALSE, row.names = FALSE)
+write.csv(Cal2022tr, "C:/.../Cal2022tr.csv", quote = FALSE, row.names = FALSE)
 
 
 
@@ -472,14 +467,14 @@ write.csv(Cal2022tr, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machi
 Cal2023tr <- ARL_2023 %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Cal2023tr, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2023tr.csv", quote = FALSE, row.names = FALSE)
+write.csv(Cal2023tr, "C:/.../Cal2023tr.csv", quote = FALSE, row.names = FALSE)
 
 
 #Total
 Caltottr <- ARL_total %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Caltottr, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Caltottr.csv", quote = FALSE, row.names = FALSE)
+write.csv(Caltottr, "C:/.../Caltottr.csv", quote = FALSE, row.names = FALSE)
 
 
 ```
@@ -488,17 +483,17 @@ write.csv(Caltottr, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machin
 Importing transaction file
 ```{r}
 
-tr2020 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2020tr.csv", format = "basket", sep = ",")
+tr2020 <- read.transactions("C:/.../Cal2020tr.csv", format = "basket", sep = ",")
 
 
-tr2021 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2021tr.csv", format = "basket", sep = ",")
+tr2021 <- read.transactions("C:/.../Cal2021tr.csv", format = "basket", sep = ",")
 
-tr2022 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2022tr.csv", format = "basket", sep = ",")
+tr2022 <- read.transactions("C:/.../Cal2022tr.csv", format = "basket", sep = ",")
 
 
-tr2023 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2023tr.csv", format = "basket", sep = ",")
+tr2023 <- read.transactions("C:/.../Cal2023tr.csv", format = "basket", sep = ",")
 
-trtot <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Caltottr.csv", format = "basket", sep = ",")
+trtot <- read.transactions("C:/.../Caltottr.csv", format = "basket", sep = ",")
 
 ```
 
