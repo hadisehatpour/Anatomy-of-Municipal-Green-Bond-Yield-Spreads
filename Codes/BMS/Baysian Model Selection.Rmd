@@ -1,7 +1,7 @@
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+############################################
 Import transaction file for the first spread
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+############################################
 ```{r}
 tr2020 <- read.transactions("C:/.../Cal2020tr.csv", format = "basket", sep = ",")
 
@@ -13,9 +13,9 @@ tr2023 <- read.transactions("C:/.../Cal2023tr.csv", format = "basket", sep = ","
 
 trtot <- read.transactions("C:/.../Caltottr.csv", format = "basket", sep = ",")
 ```
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+################################################
 Importing transaction file for the second spread
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+################################################
 ```{r}
 tr2020_S2 <- read.transactions("C:/.../Cal2020tr_S2.csv", format = "basket", sep = ",")
 
@@ -27,9 +27,9 @@ tr2023_S2 <- read.transactions("C:/.../Cal2023tr_S2.csv", format = "basket", sep
 
 trtot_S2 <- read.transactions("C:/.../Caltottr_S2.csv", format = "basket", sep = ",")
 ```
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+########################################
 Generating Rules (positive and negative)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+########################################
 ```{r}
 #S1
 PP.association.rules <- apriori(trtot, parameter = list(supp=0.001, conf=0.001, maxlen=10),appearance = list(default="lhs",rhs="S+"))
@@ -42,9 +42,9 @@ PP.association.rules_S2 <- apriori(trtot_S2, parameter = list(supp=0.001, conf=0
 NP.association.rules_S2 <- apriori(trtot_S2, parameter = list(supp=0.001, conf=0.001, maxlen=10),appearance = list(default="lhs",rhs="S-"))
 
 ```
-%%%%%%%%%%%
+###########
 S1 Positive
-%%%%%%%%%%%
+###########
 ```{r}
 Pr_M_i <- 1/(length(unique(size(PP.association.rules)))-1)
 
@@ -73,9 +73,9 @@ Pr_Mi_D_5 <- P_D_M_i_5 * Nor_mag
 Pr_Mi_D_6 <- P_D_M_i_6 * Nor_mag
 
 ```
-%%%%%%%%%%%
+###########
 S1 Negative
-%%%%%%%%%%%
+###########
 ```{r}
 
 Pr_M_i_N <- 1/(length(unique(size(NP.association.rules)))-1)
@@ -106,9 +106,9 @@ Pr_Mi_D_6_N <- P_D_M_i_6_N * Nor_mag_N
 
 
 ```
-%%%%%%%%%%%
+###########
 S2 Positive
-%%%%%%%%%%%
+###########
 ```{r}
 
 Pr_M_i_S2 <- 1/(length(unique(size(PP.association.rules)))-1)
@@ -133,9 +133,9 @@ Pr_Mi_D_3_S2 <- P_D_M_i_3_S2 * Nor_mag_S2
 Pr_Mi_D_4_S2 <- P_D_M_i_4_S2 * Nor_mag_S2
 Pr_Mi_D_5_S2 <- P_D_M_i_5_S2 * Nor_mag_S2
 ```
-%%%%%%%%%%%
+###########
 S2 Negative
-%%%%%%%%%%%
+###########
 ```{r}
 Pr_M_i_S2_N <- 1/(length(unique(size(NP.association.rules)))-1)
 
