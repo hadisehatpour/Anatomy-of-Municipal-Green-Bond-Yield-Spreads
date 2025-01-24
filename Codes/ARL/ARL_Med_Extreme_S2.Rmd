@@ -1,9 +1,4 @@
----
-title: "Extereme Spread (Second spread)"
-author: "Hadi"
-date: "2023-12-05"
-output: html_document
----
+
 load libraries
 ```{r}
 library(arules)
@@ -21,10 +16,10 @@ library(xtable)
 Load datasets
 ```{r}
 MLFeat <- 
-  read_excel(path ="C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine learning ARL/Data/Features.xlsx", na = c ("NA", "#N/A N/A", "#N/A Field Not Applicable", "#N/A Invalid Security"))
+  read_excel(path ="C:/.../Features.xlsx", na = c ("NA", "#N/A N/A", "#N/A Field Not Applicable", "#N/A Invalid Security"))
 
 
-California_20_23 <- read_feather("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Data/Muni/New Dataset/Processed/California_20_23.feather")
+California_20_23 <- read_feather("C:.../California_20_23.feather")
 
 
 ```
@@ -426,13 +421,13 @@ convert dataframe to transaction format
 Cal2022tr_ext_S2 <- ARL_2020_ext_S2 %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Cal2022tr_ext_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2020tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
+write.csv(Cal2022tr_ext_S2, "C:/.../Cal2020tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
 
 #2021
 Cal2021tr_ext_S2 <- ARL_2021_ext_S2 %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Cal2021tr_ext_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2021tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
+write.csv(Cal2021tr_ext_S2, "C:.../Cal2021tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
 
 
 
@@ -440,20 +435,20 @@ write.csv(Cal2021tr_ext_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Code
 Cal2022tr_ext_S2 <- ARL_2022_ext_S2 %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Cal2022tr_ext_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2022tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
+write.csv(Cal2022tr_ext_S2, "C:.../Cal2022tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
 
 #2023
 Cal2023tr_ext_S2 <- ARL_2023_ext_S2 %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Cal2023tr_ext_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2023tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
+write.csv(Cal2023tr_ext_S2, "C:/.../Cal2023tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
 
 
 
 Cal_t_tr_ext_S2 <- ARL_t_ext_S2 %>%
   unite(item, everything(), sep = ",")
 
-write.csv(Cal_t_tr_ext_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal_t_tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
+write.csv(Cal_t_tr_ext_S2, "C:/.../Cal_t_tr_ext_S2.csv", quote = FALSE, row.names = FALSE)
 
 
 
@@ -464,17 +459,17 @@ write.csv(Cal_t_tr_ext_S2, "C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes
 Importing transaction file
 ```{r}
 
-tr2020__ext_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2020tr_ext_S2.csv", format = "basket", sep = ",")
+tr2020__ext_S2 <- read.transactions("C:/.../Cal2020tr_ext_S2.csv", format = "basket", sep = ",")
 
 
-tr2021_ext_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2021tr_ext_S2.csv", format = "basket", sep = ",")
+tr2021_ext_S2 <- read.transactions("C:/.../Cal2021tr_ext_S2.csv", format = "basket", sep = ",")
 
-tr2022_ext_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2022tr_ext_S2.csv", format = "basket", sep = ",")
+tr2022_ext_S2 <- read.transactions("C:/.../Cal2022tr_ext_S2.csv", format = "basket", sep = ",")
 
 
-tr2023_ext_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal2023tr_ext_S2.csv", format = "basket", sep = ",")
+tr2023_ext_S2 <- read.transactions("C:/.../Cal2023tr_ext_S2.csv", format = "basket", sep = ",")
 
-tr_ext_S2 <- read.transactions("C:/Users/Hadi/Desktop/PhD/Thesis/First Project/Codes/Machine Learning ARL/Data/Cal_t_tr_ext_S2.csv", format = "basket", sep = ",")
+tr_ext_S2 <- read.transactions("C:/.../Cal_t_tr_ext_S2.csv", format = "basket", sep = ",")
 
 ```
 
