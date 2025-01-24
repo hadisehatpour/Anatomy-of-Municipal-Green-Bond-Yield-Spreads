@@ -1,7 +1,7 @@
 
-%%%%%%%%%%%%%%
+##############
 load libraries
-%%%%%%%%%%%%%%
+##############
 ```{r}
 library(dplyr)
 library(lubridate)
@@ -24,9 +24,9 @@ library(feather)
 ```
 
 
-%%%%%%%%%%%%%%%%%%%%%%%
+##################
 Data - preparation
-%%%%%%%%%%%%%%%%%%%%%%%
+##################
 ```{r}
 
 attributes <- c("MUNI_TAX_PROV","Pricing_TYP", "CPN_range",
@@ -54,9 +54,9 @@ ds <- bind_rows(ds)
 
 
 ```
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-attribute Anova tests for maturity groups
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#########################################
+Attribute Anova tests for maturity groups
+#########################################
 ```{r}
  
 maturities <- c(" Less than 8", "8_12.3", "12.3_17", "Higher than 17")
@@ -95,9 +95,9 @@ for (i in 1:length(maturities)) {
 }
 
 ```
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+######################################
 Box plots - All maturity groups for S1
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+######################################
 ```{r}
 
 # Convert aov_t_data (list) to dataframe
@@ -151,9 +151,9 @@ for (j in 1:length(maturities)) {
 ```
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+######################################
 Box plots - All maturity groups for S2
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+######################################
 ```{r}
 
 
